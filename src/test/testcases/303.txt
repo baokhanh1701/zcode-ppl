@@ -1,0 +1,6 @@
+
+            string BaoKhanh
+            bool BaoKhanh
+            string BaoKhanh <- 1
+            bool BaoKhanh <- 1
+        

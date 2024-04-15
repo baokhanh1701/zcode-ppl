@@ -1,0 +1,4 @@
+
+            number BaoKhanh[5,3,4.2] <- 1
+            bool BaoKhanh[2,3,4]
+        

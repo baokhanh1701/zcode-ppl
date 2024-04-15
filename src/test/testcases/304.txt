@@ -1,0 +1,4 @@
+
+            string BaoKhanh[5] <- 1
+            string BaoKhanh[5]
+        
