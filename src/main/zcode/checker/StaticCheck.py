@@ -22,6 +22,7 @@ class VarType(ZCodeType):
         self.typ = typ
 
 
+
 class StaticChecker(BaseVisitor, Utils):
     def __init__(self, ast, ):
         self.ast = ast
@@ -42,6 +43,26 @@ class StaticChecker(BaseVisitor, Utils):
 
         self.list_of_function = [{}]
 
+    # def setTypeArray(self, typeArray, typeArrayZcode):
+    #     if typeArray.size[0] != len(typeArrayZcode.eleType):
+    #         return False
+        
+    #     #* trường hợp bên trong array là các kiểu nguyên thủy (array 1 chiều)
+    #        #^ nếu typeArrayZcode.eleType[i] là Zcode : gán typeArrayZcode.eleType[i].typ = typeArray.eleType
+    #        #^ nếu typeArrayZcode.eleType[i] là arrayZcode : trả về False (vì 1 chiều mà bắt gán 2 chiều :) )
+    #     if len(typeArray.size) == 1:
+    #         #TODO implement
+    #         for i in typeArrayZcode.eleType:
+    #             if (typeArrayZcode.eleType[i] is ZCodeType):
+    #                 typeArrayZcode.eleType[i].typ = typeArray.eleType
+    #             if (typeArrayZcode.eleType[i] is ArrayType):
+    #                 return False
+    #     #* trường hợp bên trong array là các arrayType (array >= 2 chiều)
+    #        #^ nếu typeArrayZcode.eleType[i] là Zcode : gán typeArrayZcode.eleType[i].typ = typeArray.eleType
+    #        #^ nếu typeArrayZcode.eleType[i] là arrayZcode : gọi đệ quy self.setTypeArray(ArrayType(typeArray.size[1:], typeArray.eleType),typeArrayZcode[i]) để vào bên trong xem có lỗi gì không       
+    #     else: return False
+    #         #TODO implement
+            
     def debugLogs(self, ast, param, visit_name):
         print("-------------- Start state of " + visit_name + "--------------")
         print("ast: ", ast)
@@ -99,14 +120,28 @@ class StaticChecker(BaseVisitor, Utils):
         if (param[0].get(ast.name.name) != None):
             raise Redeclared(Variable(), ast.name.name)
 
+        
         param[0][ast.name.name] = VarType(ast.varType)
         # print("* varInit: ", ast.varInit)
         # print("* type(varInit): ", type(ast.varInit))
         # print("* name: ", ast.name)
         # print("* type(name): ", type(ast.name))
+        print("param: ", param)
         if (ast.varInit):
-            self.visit(ast.varInit, param)
-        
+            lhs = ast.varType
+            rhs = self.visit(ast.varInit, param)
+            
+            print("lhs: ", lhs)
+            print("rhs: ", rhs)
+            if (lhs is None and rhs is None):
+                raise TypeCannotBeInferred(ast)
+            if (lhs is Type and rhs is ArrayType):
+                raise TypeCannotBeInferred(ast)
+            if (lhs is not Type and rhs is ArrayType):
+                if (lhs is StringType or lhs is BoolType or lhs is NumberType):
+                    raise TypeMismatchInStatement(ast)
+                if (lhs is ArrayType):
+                    checkArray = False
 
     def visitFuncDecl(self, ast: FuncDecl, param):
         print("visitFucnDecl", ast.name.name)
@@ -170,34 +205,22 @@ class StaticChecker(BaseVisitor, Utils):
 
     def visitId(self, ast: Id, param):
         # self.debugLogs(ast, param, "visitId")
-        print("visitId", ast.name)
-        print("* param: ", param)
+        print("visitId", ast.name)        
         check_exist = None
+        founded = None
         
         for scope in param:
-            if (scope.get(ast.name)):
-                if (isinstance(scope.get(ast.name), VarType)):
-                    check_exist = scope.get(ast.name).typ
+            founded = scope.get(ast.name)
+            if (founded):
+                if (isinstance(founded, VarType)):
+                    check_exist = founded.typ
                     break
+            else: continue
         
-        if (check_exist is None):
+        if (founded is None):
             raise Undeclared(Identifier(), ast.name)
-            
-        """
-            TODO kiểm tra xem name có trong toàn bộ param nén lỗi Undeclared
-            ^ nếu không Undeclared thì return về Id.typ nếu VarType.typ != None còn nếu VarType.typ = None thì return VarType
-            ^ nguyên lí nó truyền theo con trỏ trong c++, nếu thay đổi VarType thì param cũng thay đổi
-            VD 1:
-            number a
-            number b <- a -> a đã có VarType.typ nên return VarType.typ
 
-            VD 2:
-            number b <- a -> Undeclared(Identifier(), ast.name)      
-
-            VD 3:
-            var a
-            number b <- a -> a có VarType.typ = None nên return VarType              
-        """
+        print("check_exist: ", check_exist)
         return check_exist
 
 
