@@ -250,124 +250,124 @@ class CheckSuite(unittest.TestCase):
         expect = "Redeclared Function: foo"
         self.assertTrue(TestChecker.test(input, expect, 425))
         
-    # def test_3_Undeclared(self):
-    #     input = """
-    #         number a <- a
-    #         func main() begin
-    #             number b <- a
-    #             number c <- e
-    #         end
-    #     """
-    #     expect = "Undeclared Identifier: e"
-    #     self.assertTrue(TestChecker.test(input, expect, 426))
+    def test_3_Undeclared(self):
+        input = """
+            number a <- a
+            func main() begin
+                number b <- a
+                number c <- e
+            end
+        """
+        expect = "Undeclared Identifier: e"
+        self.assertTrue(TestChecker.test(input, expect, 426))
         
-#         input = """
-#             func a() return 1
-#             func main() begin
-#                 number b <- a
-#             end
-#         """
-#         expect = "Undeclared Identifier: a"
-#         self.assertTrue(TestChecker.test(input, expect, 427))
+        input = """
+            func a() return 1
+            func main() begin
+                number b <- a
+            end
+        """
+        expect = "Undeclared Identifier: a"
+        self.assertTrue(TestChecker.test(input, expect, 427))
         
-#         input = """
-#             func a() return 1
-#             func main() begin
-#                 number a
-#                 begin 
-#                     number d
-#                 end
-#                 number b <- a
-#                 number c <- d
-#             end
-#         """
-#         expect = "Undeclared Identifier: d"
-#         self.assertTrue(TestChecker.test(input, expect, 428))
+        input = """
+            func a() return 1
+            func main() begin
+                number a
+                begin 
+                    number d
+                end
+                number b <- a
+                number c <- d
+            end
+        """
+        expect = "Undeclared Identifier: d"
+        self.assertTrue(TestChecker.test(input, expect, 428))
         
-#         input = """
-#             func a() begin
-#                 a()
-#             end
-#             func main() begin
-#                 a()
-#                 b()
-#             end
-#         """
-#         expect = "Undeclared Function: b"
-#         self.assertTrue(TestChecker.test(input, expect, 429))
+        input = """
+            func a() begin
+                a()
+            end
+            func main() begin
+                a()
+                b()
+            end
+        """
+        expect = "Undeclared Function: b"
+        self.assertTrue(TestChecker.test(input, expect, 429))
         
-#         input = """
-#             func a() return
-#             func main() begin
-#                 number a
-#                 a()
-#             end
-#         """
-#         expect = ""
-#         self.assertTrue(TestChecker.test(input, expect, 430))
+        input = """
+            func a() return
+            func main() begin
+                number a
+                a()
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 430))
         
-#         input = """
-#             func a()
-#             func main() begin
-#                 a()
-#             end
-#             func a() return
-#         """
-#         expect = ""
-#         self.assertTrue(TestChecker.test(input, expect, 431))
+        input = """
+            func a()
+            func main() begin
+                a()
+            end
+            func a() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 431))
 
 
-#     def test_4_MustInLoop(self):
-#         input = """
-#             func main() begin
-#                 var i <- 2
-#                 for i until true by 1
-#                 begin
-#                     break
-#                     continue
-#                     begin
-#                         break
-#                         continue
-#                     end
+    def test_4_MustInLoop(self):
+        input = """
+            func main() begin
+                var i <- 2
+                for i until true by 1
+                begin
+                    break
+                    continue
+                    begin
+                        break
+                        continue
+                    end
                     
-#                     for i until true by 1
-#                     begin
-#                         break
-#                         continue
-#                     end
-#                     break
-#                     continue
-#                 end
-#             end
-#         """
-#         expect = ""
-#         self.assertTrue(TestChecker.test(input, expect, 432))
+                    for i until true by 1
+                    begin
+                        break
+                        continue
+                    end
+                    break
+                    continue
+                end
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 432))
         
-#         input = """
-#             func main() begin
-#                 break
-#             end
-#         """
-#         expect = "Break Not In Loop"
-#         self.assertTrue(TestChecker.test(input, expect, 433))
+        input = """
+            func main() begin
+                break
+            end
+        """
+        expect = "Break Not In Loop"
+        self.assertTrue(TestChecker.test(input, expect, 433))
         
-#         input = """
-#             func main() begin
-#                 continue
-#             end
-#         """
-#         expect = "Continue Not In Loop"
-#         self.assertTrue(TestChecker.test(input, expect, 434))
+        input = """
+            func main() begin
+                continue
+            end
+        """
+        expect = "Continue Not In Loop"
+        self.assertTrue(TestChecker.test(input, expect, 434))
         
-#     def test_5_TypeCannotBeInferred(self):
-#         input = """
-#             dynamic VoTien
-#             var a <- VoTien
+    def test_5_TypeCannotBeInferred(self):
+        input = """
+            dynamic VoTien
+            var a <- VoTien
 
-#             func main() return
-#         """
-#         expect = "Type Cannot Be Inferred: VarDecl(Id(a), None, var, Id(VoTien))"
-#         self.assertTrue(TestChecker.test(input, expect, 435))
+            func main() return
+        """
+        expect = "Type Cannot Be Inferred: VarDecl(Id(a), None, var, Id(VoTien))"
+        self.assertTrue(TestChecker.test(input, expect, 435))
         
 #         input = """
 #             number VoTien

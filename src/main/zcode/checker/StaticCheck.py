@@ -94,15 +94,22 @@ class StaticChecker(BaseVisitor, Utils):
                 raise NoEntryPoint()
 
     def visitVarDecl(self, ast: VarDecl, param):
-        print("visitVarDecl")
+        print("visitVarDecl", ast.name.name)
 
         if (param[0].get(ast.name.name) != None):
             raise Redeclared(Variable(), ast.name.name)
 
         param[0][ast.name.name] = VarType(ast.varType)
+        # print("* varInit: ", ast.varInit)
+        # print("* type(varInit): ", type(ast.varInit))
+        # print("* name: ", ast.name)
+        # print("* type(name): ", type(ast.name))
+        if (ast.varInit):
+            self.visit(ast.varInit, param)
+        
 
     def visitFuncDecl(self, ast: FuncDecl, param):
-        print("visitFucnDecl")
+        print("visitFucnDecl", ast.name.name)
 
         check_exists_func = self.list_of_function[0].get(ast.name.name)
 
@@ -118,10 +125,6 @@ class StaticChecker(BaseVisitor, Utils):
             )
 
         self.function = self.list_of_function[0][ast.name.name]
-        print(ast.name.name)
-
-        print('param: ', param)
-
         typeParam = []
         listParam = {}
         typeParamToString = []
@@ -165,12 +168,21 @@ class StaticChecker(BaseVisitor, Utils):
         # elif not self.list_of_function[0][ast.name.name].typ == VoidType():
         #     raise TypeMismatchInStatement(Return(None))
 
-    def visitId(self, ast, param):
+    def visitId(self, ast: Id, param):
         # self.debugLogs(ast, param, "visitId")
-
-        check_exists = False
-        # for i in param:
-        # if ()
+        print("visitId", ast.name)
+        print("* param: ", param)
+        check_exist = None
+        
+        for scope in param:
+            if (scope.get(ast.name)):
+                if (isinstance(scope.get(ast.name), VarType)):
+                    check_exist = scope.get(ast.name).typ
+                    break
+        
+        if (check_exist is None):
+            raise Undeclared(Identifier(), ast.name)
+            
         """
             TODO kiểm tra xem name có trong toàn bộ param nén lỗi Undeclared
             ^ nếu không Undeclared thì return về Id.typ nếu VarType.typ != None còn nếu VarType.typ = None thì return VarType
@@ -186,8 +198,11 @@ class StaticChecker(BaseVisitor, Utils):
             var a
             number b <- a -> a có VarType.typ = None nên return VarType              
         """
+        return check_exist
+
 
     def visitCallExpr(self, ast, param):
+        print("visitCallExpr")
         # self.debugLogs(ast, param, "visitCallExpr")
         """
             TODO kiểm tra xem name có trong self.listFunction nén lỗi Undeclared
@@ -215,8 +230,16 @@ class StaticChecker(BaseVisitor, Utils):
         """
 
     def visitCallStmt(self, ast, param):
+        print("visitCallStmt")
         # self.debugLogs(ast, param, "visitCallStmt")
         """như CallExpr chỉ khác ở chỗ not comparType(FuncType.typ, VoidType()) -> TypeMismatchInStatement"""
+        print("* param: ", param)
+        print("* list of function: ", self.list_of_function)
+        
+        if (self.list_of_function[0].get(ast.name.name) is None):
+            raise Undeclared(Function(), ast.name.name)
+        
+        method = self.list_of_function[0].get(ast.name.name)
 
     def visitIf(self, ast, param):
         # self.debugLogs(ast, param, "visitIf")
@@ -258,7 +281,8 @@ class StaticChecker(BaseVisitor, Utils):
         # return NumberType()
 
     def visitAssign(self, ast, param):
-        self.debugLogs(ast, param, "visitAssign")
+        # self.debugLogs(ast, param, "visitAssign")
+        print("visitAssign")
         """
             TODO giống phần kiểm tra TypeCannotBeInferred và TypeMismatchInStatement xử lí ast.varInit nếu tồn tại
         """
@@ -284,7 +308,7 @@ class StaticChecker(BaseVisitor, Utils):
             return ArrayType([len(ast.value)], typ)
         return ArrayType([len(ast.value)] + typ.size, typ.eleType)
 
-    def visitBlock(self, ast, param):
+    def visitBlock(self, ast: Block, param):
         print("visitBlock")
         # self.debugLogs(ast, param, "visitBlock")
         for item in ast.stmt:
