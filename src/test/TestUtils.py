@@ -135,6 +135,7 @@ class TestAST:
 class TestChecker:
     @staticmethod
     def test(input, expect, num):
+        print("----------------------------", num, "----------------------------")
         if type(input) is str:
             inputfile = TestUtil.makeSource(input, num)
             lexer = Lexer(inputfile)

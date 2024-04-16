@@ -135,7 +135,6 @@ class StaticChecker(BaseVisitor, Utils):
         pass
 
     def visitProgram(self, ast, param):
-        print("======================================")
         print("visitProgram")
         for i in ast.decl:
             self.visit(i, param)
