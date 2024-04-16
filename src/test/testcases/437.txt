@@ -2,6 +2,6 @@
             dynamic VoTien
             number a <- VoTien
             number b <- VoTien
-
+            number e <- b
             func main() return
         
