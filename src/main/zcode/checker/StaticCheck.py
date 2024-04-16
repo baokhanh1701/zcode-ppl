@@ -112,22 +112,23 @@ class StaticChecker(BaseVisitor, Utils):
                             return False
                     else: return True
             else:
-                if (isinstance(lhs, VoidType) and isinstance(rhs, VoidType)):
-                    print("VoidType")
-                    return True
-                if (isinstance(lhs, ArrayType) or isinstance(rhs, ArrayType)): 
-                    print("ArrayType or ArrayType")
-                    return False
-                if (isinstance(lhs, NumberType) and isinstance(rhs, NumberType)):
-                    print("NumberType")
-                    return True
-                if (isinstance(lhs, StringType) and isinstance(rhs, StringType)):
-                    print("StringType")
-                    return True
-                if (isinstance(lhs, BoolType) and isinstance(rhs, BoolType)):
-                    print("BoolType")
-                    return True
-                return False                
+                return (str(lhs) == str(rhs))
+                # if (isinstance(lhs, VoidType) and isinstance(rhs, VoidType)):
+                #     print("VoidType")
+                #     return True
+                # if (isinstance(lhs, ArrayType) or isinstance(rhs, ArrayType)): 
+                #     print("ArrayType or ArrayType")
+                #     return False
+                # if (isinstance(lhs, NumberType) and isinstance(rhs, NumberType)):
+                #     print("NumberType")
+                #     return True
+                # if (isinstance(lhs, StringType) and isinstance(rhs, StringType)):
+                #     print("StringType")
+                #     return True
+                # if (isinstance(lhs, BoolType) and isinstance(rhs, BoolType)):
+                #     print("BoolType")
+                #     return True
+                # return False                
 
             
 
