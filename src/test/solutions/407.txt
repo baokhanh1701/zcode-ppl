@@ -1,1 +1,1 @@
-Type Mismatch In Statement: AssignStmt(Id(a), Id(c))
+Type Cannot Be Inferred: AssignStmt(Id(b), Id(c))

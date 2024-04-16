@@ -881,359 +881,359 @@ from TestUtils import TestChecker
 from AST import *
 
 class CheckSuite(unittest.TestCase):
-    # def test_1_No_entry_point(self):
-    #     input = """
-    #         func main() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 401))
+    def test_1_No_entry_point(self):
+        input = """
+            func main() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 401))
         
-    #     input = """
-    #         func main()
-    #         func main() begin
-    #             number main
-    #         end
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 402))
+        input = """
+            func main()
+            func main() begin
+                number main
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 402))
         
-    #     input = """
-    #         func main(number a) begin
-    #         end
-    #     """
-    #     expect = "No Entry Point"
-    #     self.assertTrue(TestChecker.test(input, expect, 403))
+        input = """
+            func main(number a) begin
+            end
+        """
+        expect = "No Entry Point"
+        self.assertTrue(TestChecker.test(input, expect, 403))
         
-    #     input = """
-    #         func main() return 1   
-    #     """
-    #     expect = "No Entry Point"
-    #     self.assertTrue(TestChecker.test(input, expect, 404))
+        input = """
+            func main() return 1   
+        """
+        expect = "No Entry Point"
+        self.assertTrue(TestChecker.test(input, expect, 404))
         
-    #     input = """
-    #         number VoTien
-    #     """
-    #     expect = "No Entry Point"
-    #     self.assertTrue(TestChecker.test(input, expect, 405))
+        input = """
+            number VoTien
+        """
+        expect = "No Entry Point"
+        self.assertTrue(TestChecker.test(input, expect, 405))
 
-    # def test_2_NoDefinition(self):
-    #     input = """
-    #         func foo(number a)
-    #         func foo(number a) return     
+    def test_2_NoDefinition(self):
+        input = """
+            func foo(number a)
+            func foo(number a) return     
         
-    #         func main() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 406))
+            func main() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 406))
 
-    #     input = """
-    #         func foo(number a) return   
+        input = """
+            func foo(number a) return   
         
-    #         func main() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 407))
+            func main() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 407))
         
-    #     input = """
-    #         func foo(number a) 
+        input = """
+            func foo(number a) 
         
-    #         func main() return
-    #     """
-    #     expect = "No Function Definition: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 408))
+            func main() return
+        """
+        expect = "No Function Definition: foo"
+        self.assertTrue(TestChecker.test(input, expect, 408))
         
-    # def test_3_Redeclared(self):
-    #     input = """
-    #         number a
-    #         string a 
+    def test_3_Redeclared(self):
+        input = """
+            number a
+            string a 
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Variable: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 410))
+            func main() return
+        """
+        expect = "Redeclared Variable: a"
+        self.assertTrue(TestChecker.test(input, expect, 410))
         
-    #     input = """
-    #         func a()
-    #         number a
+        input = """
+            func a()
+            number a
             
-    #         func main() return
-    #     """
-    #     expect = "No Function Definition: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 411))
+            func main() return
+        """
+        expect = "No Function Definition: a"
+        self.assertTrue(TestChecker.test(input, expect, 411))
         
-    #     input = """
-    #         func foo() return
-    #         func foo()
+        input = """
+            func foo() return
+            func foo()
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 412))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 412))
         
-    #     input = """
-    #         func foo()
-    #         func foo()
+        input = """
+            func foo()
+            func foo()
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 413))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 413))
         
-    #     input = """
-    #         func foo() return
-    #         func foo() return
+        input = """
+            func foo() return
+            func foo() return
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 414))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 414))
         
-    #     input = """
-    #         number foo
-    #         func foo() return
+        input = """
+            number foo
+            func foo() return
             
-    #         func main() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 415))
+            func main() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 415))
         
-    #     input = """
-    #         number a
-    #         func VoTien() return
-    #         func main()begin
-    #             number a
-    #             number c
-    #             string VoTien
-    #             begin
-    #                 number c
-    #                 string VoTien
-    #             end
-    #         end
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 416))
+        input = """
+            number a
+            func VoTien() return
+            func main()begin
+                number a
+                number c
+                string VoTien
+                begin
+                    number c
+                    string VoTien
+                end
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 416))
         
-    #     input = """
-    #         number a
-    #         func VoTien() return
-    #         func main()begin
-    #             number a
-    #             string a
-    #         end
-    #     """
-    #     expect = "Redeclared Variable: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 417))
+        input = """
+            number a
+            func VoTien() return
+            func main()begin
+                number a
+                string a
+            end
+        """
+        expect = "Redeclared Variable: a"
+        self.assertTrue(TestChecker.test(input, expect, 417))
         
-    #     input = """
-    #         number a
-    #         func VoTien() return
-    #         func main()begin
-    #             number a
-    #             begin
-    #                 number a
-    #             end
-    #             string a
-    #         end
-    #     """
-    #     expect = "Redeclared Variable: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 418))
+        input = """
+            number a
+            func VoTien() return
+            func main()begin
+                number a
+                begin
+                    number a
+                end
+                string a
+            end
+        """
+        expect = "Redeclared Variable: a"
+        self.assertTrue(TestChecker.test(input, expect, 418))
         
-    #     input = """
-    #         number a
-    #         func VoTien() return
-    #         func main()begin
-    #             number a
-    #             begin
-    #                 number a
-    #                 string a
-    #             end
+        input = """
+            number a
+            func VoTien() return
+            func main()begin
+                number a
+                begin
+                    number a
+                    string a
+                end
                 
-    #         end
-    #     """
-    #     expect = "Redeclared Variable: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 419))
+            end
+        """
+        expect = "Redeclared Variable: a"
+        self.assertTrue(TestChecker.test(input, expect, 419))
         
-    #     input = """
-    #         number a
-    #         func VoTien(number a, number VoTien, number c)
-    #         begin
-    #             string c
-    #         end
+        input = """
+            number a
+            func VoTien(number a, number VoTien, number c)
+            begin
+                string c
+            end
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Variable: c"
-    #     self.assertTrue(TestChecker.test(input, expect, 420))
+            func main() return
+        """
+        expect = "Redeclared Variable: c"
+        self.assertTrue(TestChecker.test(input, expect, 420))
         
-    #     input = """
-    #         number a
-    #         func VoTien(number a, number VoTien, number c, string c)
-    #         begin
-    #         end
+        input = """
+            number a
+            func VoTien(number a, number VoTien, number c, string c)
+            begin
+            end
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Parameter: c"
-    #     self.assertTrue(TestChecker.test(input, expect, 421))
+            func main() return
+        """
+        expect = "Redeclared Parameter: c"
+        self.assertTrue(TestChecker.test(input, expect, 421))
         
-    #     input = """
-    #         number a
-    #         func VoTien(number a, number VoTien, number c)
-    #         begin
-    #             begin
-    #                 number a
-    #             end
-    #             number a
-    #         end
+        input = """
+            number a
+            func VoTien(number a, number VoTien, number c)
+            begin
+                begin
+                    number a
+                end
+                number a
+            end
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Variable: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 422))
+            func main() return
+        """
+        expect = "Redeclared Variable: a"
+        self.assertTrue(TestChecker.test(input, expect, 422))
         
-    #     input = """
-    #         func foo(number a) 
-    #         func foo(number b) return
+        input = """
+            func foo(number a) 
+            func foo(number b) return
             
-    #         func main() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 423))
+            func main() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 423))
         
-    #     input = """
-    #         func foo(number a) 
-    #         func foo(string a) return
+        input = """
+            func foo(number a) 
+            func foo(string a) return
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 423))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 423))
         
-    #     input = """
-    #         func foo(number a) 
-    #         func foo(number a, string c) return
+        input = """
+            func foo(number a) 
+            func foo(number a, string c) return
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 424))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 424))
         
-    #     input = """
-    #         func foo(number a, string c) 
-    #         func foo(number a) return
+        input = """
+            func foo(number a, string c) 
+            func foo(number a) return
             
-    #         func main() return
-    #     """
-    #     expect = "Redeclared Function: foo"
-    #     self.assertTrue(TestChecker.test(input, expect, 425))
+            func main() return
+        """
+        expect = "Redeclared Function: foo"
+        self.assertTrue(TestChecker.test(input, expect, 425))
         
-    # def test_3_Undeclared(self):
-    #     input = """
-    #         number a <- a
-    #         func main() begin
-    #             number b <- a
-    #             number c <- e
-    #         end
-    #     """
-    #     expect = "Undeclared Identifier: e"
-    #     self.assertTrue(TestChecker.test(input, expect, 426))
+    def test_3_Undeclared(self):
+        input = """
+            number a <- a
+            func main() begin
+                number b <- a
+                number c <- e
+            end
+        """
+        expect = "Undeclared Identifier: e"
+        self.assertTrue(TestChecker.test(input, expect, 426))
         
-    #     input = """
-    #         func a() return 1
-    #         func main() begin
-    #             number b <- a
-    #         end
-    #     """
-    #     expect = "Undeclared Identifier: a"
-    #     self.assertTrue(TestChecker.test(input, expect, 427))
+        input = """
+            func a() return 1
+            func main() begin
+                number b <- a
+            end
+        """
+        expect = "Undeclared Identifier: a"
+        self.assertTrue(TestChecker.test(input, expect, 427))
         
-    #     input = """
-    #         func a() return 1
-    #         func main() begin
-    #             number a
-    #             begin 
-    #                 number d
-    #             end
-    #             number b <- a
-    #             number c <- d
-    #         end
-    #     """
-    #     expect = "Undeclared Identifier: d"
-    #     self.assertTrue(TestChecker.test(input, expect, 428))
+        input = """
+            func a() return 1
+            func main() begin
+                number a
+                begin 
+                    number d
+                end
+                number b <- a
+                number c <- d
+            end
+        """
+        expect = "Undeclared Identifier: d"
+        self.assertTrue(TestChecker.test(input, expect, 428))
         
-    #     input = """
-    #         func a() begin
-    #             a()
-    #         end
-    #         func main() begin
-    #             a()
-    #             b()
-    #         end
-    #     """
-    #     expect = "Undeclared Function: b"
-    #     self.assertTrue(TestChecker.test(input, expect, 429))
+        input = """
+            func a() begin
+                a()
+            end
+            func main() begin
+                a()
+                b()
+            end
+        """
+        expect = "Undeclared Function: b"
+        self.assertTrue(TestChecker.test(input, expect, 429))
         
-    #     input = """
-    #         func a() return
-    #         func main() begin
-    #             number a
-    #             a()
-    #         end
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 430))
+        input = """
+            func a() return
+            func main() begin
+                number a
+                a()
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 430))
         
-    #     input = """
-    #         func a()
-    #         func main() begin
-    #             a()
-    #         end
-    #         func a() return
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 431))
+        input = """
+            func a()
+            func main() begin
+                a()
+            end
+            func a() return
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 431))
 
-    # def test_4_MustInLoop(self):
-    #     input = """
-    #         func main() begin
-    #             var i <- 2
-    #             for i until true by 1
-    #             begin
-    #                 break
-    #                 continue
-    #                 begin
-    #                     break
-    #                     continue
-    #                 end
+    def test_4_MustInLoop(self):
+        input = """
+            func main() begin
+                var i <- 2
+                for i until true by 1
+                begin
+                    break
+                    continue
+                    begin
+                        break
+                        continue
+                    end
                     
-    #                 for i until true by 1
-    #                 begin
-    #                     break
-    #                     continue
-    #                 end
-    #                 break
-    #                 continue
-    #             end
-    #         end
-    #     """
-    #     expect = ""
-    #     self.assertTrue(TestChecker.test(input, expect, 432))
+                    for i until true by 1
+                    begin
+                        break
+                        continue
+                    end
+                    break
+                    continue
+                end
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 432))
         
-    #     input = """
-    #         func main() begin
-    #             break
-    #         end
-    #     """
-    #     expect = "Break Not In Loop"
-    #     self.assertTrue(TestChecker.test(input, expect, 433))
+        input = """
+            func main() begin
+                break
+            end
+        """
+        expect = "Break Not In Loop"
+        self.assertTrue(TestChecker.test(input, expect, 433))
         
-    #     input = """
-    #         func main() begin
-    #             continue
-    #         end
-    #     """
-    #     expect = "Continue Not In Loop"
-    #     self.assertTrue(TestChecker.test(input, expect, 434))
+        input = """
+            func main() begin
+                continue
+            end
+        """
+        expect = "Continue Not In Loop"
+        self.assertTrue(TestChecker.test(input, expect, 434))
         
     # def test_5_TypeCannotBeInferred(self):
     #     input = """

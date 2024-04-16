@@ -1,1 +1,1 @@
-Type Mismatch In Statement: Return()
+Redeclared Function: foo
