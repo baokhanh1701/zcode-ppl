@@ -9,6 +9,7 @@ from functools import reduce
 class ZCodeType(Type):
     pass
 
+
 class FuncZType(ZCodeType):
     def __init__(self, params=[], typ=None, body=False):
         self.params = params
@@ -22,7 +23,8 @@ class VarZType(ZCodeType):
 
 
 class ArrayZType(Type):
-    def __init__(self, typ):
+    def __init__(self, size, typ):
+        self.size = size
         self.typ = typ
 
 
@@ -94,7 +96,7 @@ class StaticChecker(BaseVisitor, Utils):
         elif (lhs is not None and rhs is None):
             return True
         elif (lhs is None and rhs is not None):
-            return True        
+            return True
         else:
             if (isinstance(lhs, ArrayType) and isinstance(rhs, ArrayType)):
                 print("********* lhs.eleType: ", lhs.eleType)
@@ -103,37 +105,29 @@ class StaticChecker(BaseVisitor, Utils):
                     return False
                 size_left = lhs.size
                 size_right = rhs.size
-                
+
                 if size_left != size_right:
                     return False
                 else:
                     for i in range(len(size_right)):
                         if size_left[i] != size_right[i]:
                             return False
-                    else: return True
+                    else:
+                        return True
             else:
                 return (str(lhs) == str(rhs))
-                # if (isinstance(lhs, VoidType) and isinstance(rhs, VoidType)):
-                #     print("VoidType")
-                #     return True
-                # if (isinstance(lhs, ArrayType) or isinstance(rhs, ArrayType)): 
-                #     print("ArrayType or ArrayType")
-                #     return False
-                # if (isinstance(lhs, NumberType) and isinstance(rhs, NumberType)):
-                #     print("NumberType")
-                #     return True
-                # if (isinstance(lhs, StringType) and isinstance(rhs, StringType)):
-                #     print("StringType")
-                #     return True
-                # if (isinstance(lhs, BoolType) and isinstance(rhs, BoolType)):
-                #     print("BoolType")
-                #     return True
-                # return False                
 
-            
-
-    def comparListType(self, listLHS, listRHS):
-        pass
+    def comparListTypeInDecl(self, lhs, rhs):
+        size_left = len(lhs)
+        size_right = len(rhs)
+        if size_left != size_right:
+            return False
+        else:
+            for i in range(size_right):
+                if not self.compareTypeInDecl(lhs[i], rhs[i]):
+                    return False
+            else:
+                return True
 
     def visitProgram(self, ast, param):
         print("visitProgram")
@@ -154,106 +148,131 @@ class StaticChecker(BaseVisitor, Utils):
                 print("No Entry Point due to params")
                 raise NoEntryPoint()
             if not isinstance(main_function.typ, VoidType):
-                print("No Entry Point due to VoidType")
+                print("No Entry Point due to not being VoidType")
                 raise NoEntryPoint()
 
     def visitVarDecl(self, ast: VarDecl, param):
-        print("visitVarDecl", ast.name.name)
+        print("\n\n", "visitVarDecl", ast.name.name)
+        # print("-----ast: ", ast)
+        # print("-----param: ", param)
 
+        # Redeclared error
         if (param[0].get(ast.name.name) is not None):
             raise Redeclared(Variable(), ast.name.name)
 
+        # create a new param that has type is equal to current Type
         param[0][ast.name.name] = VarZType(ast.varType)
 
-        # if (ast.varType):
-        # print("param: ", param[0][ast.name.name].varType)
-        print("ast: ", ast)
-        
-        # print("param name: ", param[0])
-
-        # print("param typ: ", param[0][ast.name.name].typ)
+        # If exist variable initialization --> visit
         if (ast.varInit):
-            lhs = ast.varType
-            if (ast.varType is None):
+            lhs = param[0][ast.name.name].typ  # vardecl type object
+
+            # If doesn't not exist type (var, dynamic) --> set LHS = ZCodeTye
+            if (param[0][ast.name.name].typ is None):
                 lhs = ZCodeType()
-            
+
+            # Get type of variable initialization --> visit to get varInit object (typ and name)
             rhs = self.visit(ast.varInit, param)
 
-            print("lhs - b4: ", lhs)
-            print("rhs - b4: ", rhs)
-            
+            if (isinstance(rhs, NumberType)
+                or
+                isinstance(rhs, BoolType)
+                or
+                isinstance(rhs, StringType)
+                ):
+                rhs = VarZType(rhs)
+
+            # if (rhs is VarZType):
+            if (isinstance(rhs, ArrayType)):
+                rhs = ArrayZType(rhs.size, ArrayType(rhs.size, rhs.eleType))
+            elif (
+                rhs.typ is None
+            ):
+                rhs.typ = ZCodeType()
+
+            # Debug my ass
+            # for key in param[0].keys():
+            #     print("name of param: ", key)
+            #     print("type of param:", param[0][key].typ)
+            # print("lhs: ", lhs)
+            # print("rhs: ", rhs)
             if (
-                    isinstance(lhs, ZCodeType)
-                    and
-                    isinstance(rhs, ZCodeType)):
-                print("case1")
+                ast.varType is None  # ? Xet luon ast
+                and
+                isinstance(rhs.typ, ZCodeType)
+            ):
+                # Case 1: both size of vardecl doesn't have type or type cannot be infered.
+                print("1-----case1")
                 raise TypeCannotBeInferred(ast)
             # Case 2: LHS = Type, RHS = Array
             elif (
-                    isinstance(ast.varType, ZCodeType)
+                    isinstance(lhs, ZCodeType)
                     and
-                    isinstance(rhs, ArrayZType)):
-                print("case2")
+                    isinstance(rhs.typ, ArrayZType)):
+                print("2-----case2")
                 raise TypeCannotBeInferred(ast)
             # Case 3: LHS not Type, RHS = Array
             elif (
-                    not isinstance(ast.varType, ZCodeType)
-                    and isinstance(rhs, ArrayZType)):
-                print("case3")
+                    not isinstance(lhs, ZCodeType)
+                    and isinstance(rhs.typ, ArrayZType)):
+                print("3-----case3")
                 # Case 3.1: LHS is String, Bool, Num
-                if (isinstance(ast.varType, StringType) or isinstance(lhs, BoolType) or isinstance(lhs, NumberType)):
+                if (
+                    isinstance(lhs, StringType)
+                    or isinstance(lhs, BoolType)
+                    or isinstance(lhs, NumberType)
+                ):
                     print("case3.1")
                     raise TypeMismatchInStatement(ast)
                 # Case 3.2: LHS is array Type
-                elif (isinstance(ast.varType, ArrayType)):
+                elif (isinstance(lhs, ArrayType)):
                     print("case3.2")
                     # self.compareTypeInDecl()
                     # TODO Not yet implement
-            # Case 4: LHS is Type, RHS: String, Bool, Num
-            elif (ast.varType is None
+            # Case 4: LHS is ZCodeType (dynamic, var, haven't been infered), RHS: String, Bool, Num
+            elif (isinstance(lhs, ZCodeType)
                   and
-                  (isinstance(rhs, StringType)
-                   or isinstance(rhs, BoolType)
-                   or isinstance(rhs, NumberType))):
-                print("case4")
-                # print("condition checkpoint lhs")
-                ast.varType = rhs
-                lhs = ast.varType
-                # ast.varType = rhs
-            # Case 5
-            elif ((isinstance(ast.varType, StringType)
-                   or isinstance(ast.varType, BoolType)
-                   or isinstance(ast.varType, NumberType))
-                  and isinstance(rhs, ZCodeType)):
-                print("case5")
-                # print("condition checkpoint rhs")
-                ast.varInit = lhs
-                rhs = ast.varInit
-                
-            elif (not isinstance(ast.varType, ZCodeType) and not isinstance(rhs, ZCodeType)):
-                print("case6")
-                if not self.compareTypeInDecl(ast.varType, rhs): 
+                  (isinstance(rhs.typ, StringType)
+                   or isinstance(rhs.typ, BoolType)
+                   or isinstance(rhs.typ, NumberType))):
+                print("4-----case4: LHS is ZCodeType, RHS: String, Bool, Num")
+                ast.varType = rhs.typ  # Set type of current ast to rhs's type
+                lhs = ast.varType  # Update variable LHS
+                param[0][ast.name.name].typ = rhs.typ  # Update in param
+            # Case 5: RHS is ZCodeType, LHS: String, Bool, Num
+            elif (
+                    (
+                    isinstance(lhs, StringType)
+                    or isinstance(lhs, BoolType)
+                    or isinstance(lhs, NumberType)
+                    )
+                    and
+                    isinstance(rhs.typ, ZCodeType)):
+                print("5-----case5")
+                rhs.typ = lhs
+            elif (
+                not isinstance(ast.varType, ZCodeType)
+                and
+                not isinstance(rhs.typ, ZCodeType)
+            ):
+                print("6-----case6")
+                print("--- ast.varTyoe", ast.varType)
+                print("--- ast.varTyoe", rhs.typ)
+                if not self.compareTypeInDecl(ast.varType, rhs.typ):
                     raise TypeMismatchInStatement(ast)
-                ast.varType = rhs
+                ast.varType = rhs.typ
+        print("```pass```")
 
-            print("lhs - after: ", lhs)
-            print("rhs - after: ", rhs)
-            print("ast.varType: ", ast.varType)
-            print("ast.varInit: ", ast.varInit)
-            
         return None
-        # Case 1: None - None
-
-        # print("* varInit: ", ast.varInit)
-        # print("* type(varInit): ", type(ast.varInit))
-        # print("* name: ", ast.name)
-        # print("* type(name): ", type(ast.name))
 
     def visitFuncDecl(self, ast: FuncDecl, param):
-        print("visitFucnDecl", ast.name.name)
+        print("\n\nvisitFucnDecl", ast.name.name)
+        print("-----ast:", ast)
+        print("-----param:", param)
 
         check_exists_func = self.list_of_function[0].get(ast.name.name)
 
+        # Check if exist in list of function
         if (check_exists_func):
             if (check_exists_func.body):
                 raise Redeclared(Function(), ast.name.name)
@@ -270,8 +289,7 @@ class StaticChecker(BaseVisitor, Utils):
         listParam = {}
         typeParamToString = []
 
-        # for i in self.function.params:
-
+        # If have function params
         if (self.function.params):
             for i in self.function.params:
                 typeParamToString.append(i.__str__())
@@ -298,9 +316,10 @@ class StaticChecker(BaseVisitor, Utils):
             self.visit(ast.body, [listParam] + param)
             self.function.body = True
 
-        if (self.Return == False):
+        if (not self.Return):
             self.function.typ = VoidType()
         self.Return = False  # ! kiểm tra hàm hiện tại có return hay không
+
         #! hàm này không có return
         # if not self.Return:
         #     #! type cũng chưa có luôn ta xác định nó VoidType
@@ -314,19 +333,20 @@ class StaticChecker(BaseVisitor, Utils):
         # self.debugLogs(ast, param, "visitId")
         print("visitId", ast.name)
         check_exist = None
-        
+
         for scope in param:
             founded = scope.get(ast.name)
             if (founded and isinstance(founded, VarZType)):
-                    check_exist = founded.typ
-                    if (not check_exist):
-                        return ZCodeType()
-                    break                
-        else: raise Undeclared(Identifier(), ast.name)
-        
-        print("founded: ", founded)
-        print("check_exist: ", check_exist)
-        
+                check_exist = founded
+                if (not check_exist):
+                    return ZCodeType()
+                break
+        else:
+            raise Undeclared(Identifier(), ast.name)
+
+        # print("founded: ", founded)
+        # print("check_exist: ", check_exist)
+
         # if (founded is None):
         #     raise Undeclared(Identifier(), ast.name)
 
@@ -335,6 +355,14 @@ class StaticChecker(BaseVisitor, Utils):
     def visitCallExpr(self, ast, param):
         print("visitCallExpr")
         # self.debugLogs(ast, param, "visitCallExpr")
+        if (self.list_of_function[0].get(ast.name.name) is False):
+            raise Undeclared(Function(), ast.name.name)
+
+        call_to_function = self.list_of_function[0].get(ast.name.name)
+
+        # return call_to_function.typ
+        # if (not call_to_function.param):
+
         """
             TODO kiểm tra xem name có trong self.listFunction nén lỗi Undeclared
             VD 1: đúng 
@@ -399,62 +427,163 @@ class StaticChecker(BaseVisitor, Utils):
         self.ForBlockCounter -= 1  # ! cút khỏi vòng for nào anh em
 
     def visitReturn(self, ast: Return, param):
-        print("visitReturn", ast.expr)
-        # if (ast.expr):
-
-        #     self.Return = True
-        #     self.function.typ = NumberType()
-        self.Return = True
+        print("\n\nvisitReturn", ast.expr)
+        print("ast: ", ast)
         function_type = None
         expr_type = None
-        
+
+        # If type of function is existed
+        # --> function_type = self.function.typ
         if (self.function.typ is not None):
             function_type = self.function.typ
         else:
             function_type = None
-        
+        # If have expr after Return --> return expr_type
         if (ast.expr):
             expr_type = self.visit(ast.expr, param)
+            print("expr_type after checking expr - b4:", expr_type)
+            print("@- Check if it has been return")
+            if (not self.Return):  # not return before
+                print("@-->>> Not return before")
+                if (expr_type is None):
+                    raise TypeCannotBeInferred(ast)
+                else:
+                    self.Return = expr_type
         else:
-            expr_type = VoidType()    
-        compare_type = self.compareTypeInDecl(function_type, expr_type)
-        print("function_type: ", function_type)
-        print("expr_type: ", expr_type)
-        print("compare_type of return: ", compare_type)
-        
-        if (expr_type is None and function_type is None):
-            raise TypeCannotBeInferred()
-        if (function_type is None):
-            function_type = expr_type
-            self.function.typ = expr_type
-            
-        elif (function_type is not None and not compare_type):
-            raise TypeMismatchInStatement(ast)
-        # else: pass
-        # self.list_of_function[0][param["name"]].typ = NumberType() #* Change later
-        # if (ast.expr == None):
-        #     self.list_of_function[0][param["name"]].typ = VoidType()
+            self.Return = VoidType()
 
-        # self.Return = False
-        # return NumberType()
+        print("@- Return check cases")
+        print("expr_type after checking expr - af:",
+              expr_type.typ if isinstance(expr_type, VarZType) else expr_type)
+
+        # Compare type between function and return expression.
+        print("Compare type between function and return expression.")
+        if (function_type is None):
+            print("Đéo có type của function")
+            if (
+                (
+                    isinstance(expr_type, FuncZType)
+                    or
+                    isinstance(expr_type, VarZType)
+                )
+                and not isinstance(self.Return, VoidType)
+            ):
+                if (expr_type.typ is None):
+                    print("Đéo có type của Expression luôn")
+                    raise TypeCannotBeInferred(ast)
+                function_type = expr_type.typ
+                self.function.typ = expr_type.typ
+                print("Đéo có type của function và có type của expression đã visit")
+
+            else:
+                print("Đéo có type của function và có type của expression")
+                function_type = self.Return
+                self.function.typ = self.Return
+                print("function_type: ", function_type)
+        elif (
+            function_type is not None
+            and
+            (
+                isinstance(expr_type, FuncZType)
+                or
+                isinstance(expr_type, VarZType)
+            )
+        ):
+            print("có function_type và đéo có expr_type")
+        elif (
+            function_type is not None
+            and
+            not self.compareTypeInDecl(function_type, expr_type)
+        ):
+            raise TypeMismatchInStatement(ast)
+        # else:    raise TypeMismatchInStatement(ast)
+
+        # self.list_of_function[0].get("main")
+        # if (
+        #     isinstance(expr_type, VoidType)
+        #     and
+        #     self.function.typ is None
+
+        # ):
+        #     print("1-----case1-----")
+        #     raise TypeCannotBeInferred(ast)
+
+        # if (self.function.typ is None):
+        #     print("2-----case2-----")
+        #     function_type_object.typ = expr_type
+        #     self.function.typ = expr_type
+        # elif (function_type_object.typ is not None and not compare_type):
+        #     raise TypeMismatchInStatement(ast)
 
     def visitAssign(self, ast, param):
         # self.debugLogs(ast, param, "visitAssign")
-        print("visitAssign")
+        print("\n\nvisitAssign: ", ast.lhs, ast.rhs)
         """
             TODO giống phần kiểm tra TypeCannotBeInferred và TypeMismatchInStatement xử lí ast.varInit nếu tồn tại
         """
         type_lhs = self.visit(ast.lhs, param)
         type_rhs = self.visit(ast.rhs, param)
+        print("type_lhs: ", type_lhs.typ if isinstance(
+            type_lhs, VarZType) else type_lhs)
+        print("type_rhs: ", type_rhs.typ if isinstance(
+            type_rhs, VarZType) else type_rhs)
         
-        if isinstance(type_lhs, ZCodeType):
-            if isinstance(type_rhs, ZCodeType):
+        if (
+            isinstance(type_lhs, ZCodeType)
+            and
+            isinstance(type_rhs, ZCodeType)
+        ):
+            if (
+                type_lhs.typ is None
+                and
+                type_rhs.typ is None
+            ):
                 raise TypeCannotBeInferred(ast)
+            elif (
+                type_lhs.typ is not None
+                and
+                type_rhs.typ is None
+            ):
+                type_rhs.typ = type_lhs.typ
+                return type_lhs.typ
+            elif (
+                type_lhs.typ is None
+                and
+                type_rhs.typ is not None
+            ):
+                type_lhs.typ = type_rhs.typ
+                return type_rhs.typ
+            if not self.compareTypeInDecl(type_lhs, type_rhs):
+                raise TypeMismatchInStatement(ast)
+        else:
+            return type_rhs
+            # if (
+            #     isinstance(type_lhs, ZCodeType)
+            #     and
+            #     isinstance(type_rhs, ZCodeType)
+            # ):
+            #     raise TypeCannotBeInferred(ast)
 
-        if self.compareTypeInDecl(type_lhs, type_rhs) == False:
-            raise TypeMismatchInStatement(ast)
-        
-        return type_rhs
+            # elif (
+            #     isinstance(type_lhs, ZCodeType)
+            #     and
+            #     not isinstance(type_rhs, ZCodeType)
+            # ):
+            #     print("rhs has type")
+            #     return type_rhs
+
+            # elif (
+            #     not isinstance(type_lhs, ZCodeType)
+            #     and
+            #     isinstance(type_rhs, ZCodeType)
+            # ):
+            #     print("lhs has type")
+            #     return type_lhs
+
+            # if not self.compareTypeInDecl(type_lhs, type_rhs):
+            #     raise TypeMismatchInStatement(ast)
+            # print("wtf?")
+            # return type_rhs
 
     def visitBinaryOp(self, ast, param):
         self.debugLogs(ast, param, "visitBinaryOp")
@@ -467,12 +596,9 @@ class StaticChecker(BaseVisitor, Utils):
 
     def visitArrayLiteral(self, ast, param):
         # self.debugLogs(ast, param, "visitArrayLiteral")
-        #! code chỉ mang tính tham khảo, do BTL này không yêu cầu lỗi khác nhau ArrayLiteral nên thầy ko cho TypeCannotBeInferred
         for item in ast.value:
             self.visit(item, param)
         typ = self.visit(ast.value[0], param)
-
-        #! đệ quy
         if type(typ) in [StringType, BoolType, NumberType]:
             return ArrayType([len(ast.value)], typ)
         return ArrayType([len(ast.value)] + typ.size, typ.eleType)

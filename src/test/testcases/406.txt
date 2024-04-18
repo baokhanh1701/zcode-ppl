@@ -4,7 +4,6 @@
             func fun3()
             
             func main() begin 
-               number a <- fun3()
+               return fun3()
             end
-            func fun3() return "1"  
         
