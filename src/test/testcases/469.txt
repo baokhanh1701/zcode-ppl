@@ -4,6 +4,8 @@
                 dynamic right
                 
                 var c <- - left
+                var d <- + 1
+                var e <- not true
                 left <- 1
             end
         

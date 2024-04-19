@@ -151,7 +151,7 @@ class StaticChecker(BaseVisitor, Utils):
     def visitVarDecl(self, ast: VarDecl, param):
         print("\n\n", "visitVarDecl", ast.name.name)
         # print("-----ast: ", ast)
-
+        self.prCyan("ast: " + str(ast))
         # Redeclared error
         if (param[0].get(ast.name.name) is not None):
             raise Redeclared(Variable(), ast.name.name)
@@ -636,17 +636,14 @@ class StaticChecker(BaseVisitor, Utils):
             raise TypeMismatchInStatement(ast)
 
     def visitBinaryOp(self, ast: BinaryOp, param):
-        self.prYellow("\n\nvisitBinaryOp" + str(ast.left) + " " + str(ast.right))
+        self.prYellow("\n\nvisitBinaryOp: " + str(ast.left) + " " + str(ast.right))
         type_lhs = self.visit(ast.left, param)
-        type_rhs = self.visit(ast.right, param)
 
         type_lhs = type_lhs.typ if isinstance(type_lhs, VarZType) else type_lhs
-        type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-
-        self.prPurple("type_lhs: " + str(type_lhs))
-        self.prPurple("type_rhs: " + str(type_rhs))
         op = ast.op
-
+        self.prCyan("Operator: " +  str(op))
+        # self.prPurple("type_lhs: " + str(self.visit(ast.left, param).typ))
+        # self.prPurple("type_rhs: " + str(self.visit(ast.right, param).typ))
         if (
             op == '+'
             or
@@ -658,38 +655,68 @@ class StaticChecker(BaseVisitor, Utils):
             or
             op == '%'
         ):
-            self.prCyan("Operator: " +  str(op))
-            if (
-                type_rhs is None
-                and
-                type_lhs is None
-            ):
-                type_lhs = NumberType()
-                type_rhs = NumberType()                
-                return VarZType(NumberType())
-            elif (
-                type_lhs is None
-                and
-                type_rhs is not None
-            ):
-                if (not self.compareTypeInDecl(type_rhs, NumberType())):
-                    raise TypeMismatchInExpression(ast)
-                type_lhs = NumberType()
-                type_rhs = NumberType()
-                return VarZType(NumberType())
+            
+            if (type_lhs is None):
+                self.visit(ast.left, param).typ = NumberType()
+                type_rhs = self.visit(ast.right, param)
+                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
 
-            elif (
-                type_lhs is not None
-                and
-                type_rhs is None
-            ):
-                if (not self.compareTypeInDecl(type_lhs, NumberType())):
+                if (type_rhs is None):
+                    self.visit(ast.right, param).typ = NumberType()
+                    return VarZType(NumberType())
+                else:
+                    if (not self.compareTypeInDecl(type_rhs, NumberType())):
+                        raise TypeMismatchInExpression()
+                    return VarZType(NumberType())
+            else: #type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, NumberType())): # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                type_lhs = NumberType()
-                type_rhs = NumberType()                
-                return VarZType(NumberType())
+                else: # if lhs is desired type
+                    type_rhs = self.visit(ast.right, param)
+                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                    
+                    if (type_rhs is None): # if rhs is none 
+                        self.visit(ast.right, param).typ = NumberType()
+                        return VarZType(NumberType())
+                    else: # if rhs is not none --> check if desired type
+                        if (not self.compareTypeInDecl(type_rhs, NumberType())):
+                            raise TypeMismatchInExpression()
+                        return VarZType(NumberType())                        
+            # self.prCyan("Operator: " +  str(op))
+            # if (
+            #     type_rhs is None
+            #     and
+            #     type_lhs is None
+            # ):
+            #     self.visit(ast.left, param).typ = NumberType()
+            #     self.visit(ast.right, param).typ = NumberType()                
+            #     return VarZType(NumberType())
+            # elif (
+            #     type_lhs is None
+            #     and
+            #     type_rhs is not None
+            # ):
+            #     if (not self.compareTypeInDecl(type_rhs, NumberType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.left, param).typ = NumberType()
+            #     return VarZType(NumberType())
 
-            return VarZType(NumberType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, NumberType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.right, param).typ = NumberType()                
+            #     return VarZType(NumberType())
+            # else:
+            #     if (not self.compareTypeInDecl(type_lhs, NumberType())
+            #         or
+            #         not self.compareTypeInDecl(type_rhs, NumberType())
+            #         ):
+            #         raise TypeMismatchInExpression(ast)
+            # return VarZType(NumberType())
         elif (
             op == '='
             or
@@ -703,127 +730,307 @@ class StaticChecker(BaseVisitor, Utils):
             or
             op == '>='
         ):
-            self.prCyan("Operator: " +  str(op))
-            if (
-                type_rhs is None
-                and
-                type_lhs is None
-            ):
+            if (type_lhs is None):
                 self.visit(ast.left, param).typ = NumberType()
-                self.visit(ast.right, param).typ = NumberType()
-                return VarZType(BoolType())
-            elif (
-                type_lhs is None
-                and
-                type_rhs is not None
-            ):
-                if (not self.compareTypeInDecl(type_rhs, NumberType())):
+                type_rhs = self.visit(ast.right, param)
+                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+
+                if (type_rhs is None):
+                    self.visit(ast.right, param).typ = NumberType()
+                    return VarZType(BoolType())
+                else:
+                    if (not self.compareTypeInDecl(type_rhs, NumberType())):
+                        raise TypeMismatchInExpression()
+                    return VarZType(BoolType())
+            else: #type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, NumberType())): # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                self.visit(ast.left, param).typ = NumberType()
-                return VarZType(BoolType())
-            elif (
-                type_lhs is not None
-                and
-                type_rhs is None
-            ):
-                if (not self.compareTypeInDecl(type_lhs, NumberType())):
-                    raise TypeMismatchInExpression(ast)
-                self.visit(ast.right, param).typ = NumberType()
-            return VarZType(BoolType())
+                else: # if lhs is desired type
+                    type_rhs = self.visit(ast.right, param)
+                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                    
+                    if (type_rhs is None): # if rhs is none 
+                        self.visit(ast.right, param).typ = NumberType()
+                        return VarZType(BoolType())
+                    else: # if rhs is not none --> check if desired type
+                        if (not self.compareTypeInDecl(type_rhs, NumberType())):
+                            raise TypeMismatchInExpression()
+                        return VarZType(BoolType())                        
+            # self.prCyan("Operator: " +  str(op))
+            # if (
+            #     type_rhs is None
+            #     and
+            #     type_lhs is None
+            # ):
+            #     self.visit(ast.left, param).typ = NumberType()
+            #     self.visit(ast.right, param).typ = NumberType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is None
+            #     and
+            #     type_rhs is not None
+            # ):
+            #     if (not self.compareTypeInDecl(type_rhs, NumberType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.left, param).typ = NumberType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, NumberType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.right, param).typ = NumberType()
+            # else:
+            #     if (not self.compareTypeInDecl(type_lhs, NumberType())
+            #         or
+            #         not self.compareTypeInDecl(type_rhs, NumberType())
+            #         ):
+            #         raise TypeMismatchInExpression(ast)
+            # return VarZType(BoolType())
         elif (
             op == 'and'
             or
             op == 'or'
         ):
-            self.prCyan("Operator: " +  str(op))
-            if (
-                type_rhs is None
-                and
-                type_lhs is None
-            ):
-                return VarZType(BoolType())
-            elif (
-                type_lhs is None
-                and
-                type_rhs is not None
-            ):
-                if (not self.compareTypeInDecl(type_rhs, BoolType())):
+            if (type_lhs is None):
+                self.visit(ast.left, param).typ = BoolType()
+                type_rhs = self.visit(ast.right, param)
+                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+
+                if (type_rhs is None):
+                    self.visit(ast.right, param).typ = BoolType()
+                    return VarZType(BoolType())
+                else:
+                    if (not self.compareTypeInDecl(type_rhs, BoolType())):
+                        raise TypeMismatchInExpression()
+                    return VarZType(BoolType())
+            else: #type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, BoolType())): # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                return VarZType(BoolType())
-            elif (
-                type_lhs is not None
-                and
-                type_rhs is None
-            ):
-                if (not self.compareTypeInDecl(type_lhs, BoolType())):
-                    raise TypeMismatchInExpression(ast)            
-            return VarZType(BoolType())
+                else: # if lhs is desired type
+                    type_rhs = self.visit(ast.right, param)
+                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                    
+                    if (type_rhs is None): # if rhs is none 
+                        self.visit(ast.right, param).typ = BoolType()
+                        return VarZType(BoolType())
+                    else: # if rhs is not none --> check if desired type
+                        if (not self.compareTypeInDecl(type_rhs, BoolType())):
+                            raise TypeMismatchInExpression()
+                        return VarZType(BoolType())                                    
+            # self.prCyan("Operator: " +  str(op))
+            # if (
+            #     type_rhs is None
+            #     and
+            #     type_lhs is None
+            # ):
+            #     self.visit(ast.left, param).typ = BoolType()
+            #     self.visit(ast.right, param).typ = BoolType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is None
+            #     and
+            #     type_rhs is not None
+            # ):
+            #     if (not self.compareTypeInDecl(type_rhs, BoolType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.left, param).typ = BoolType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, BoolType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.right, param).typ = BoolType()
+            #     return VarZType(BoolType())
+            # else:
+            #     if (not self.compareTypeInDecl(type_lhs, BoolType())
+            #         or
+            #         not self.compareTypeInDecl(type_rhs, BoolType())
+            #         ):
+            #         raise TypeMismatchInExpression(ast)
+                
+            # return VarZType(BoolType())
         elif (
             op == '=='
         ):
-            self.prCyan("Operator: " +  str(op))
-            if (
-                type_rhs is None
-                and
-                type_lhs is None
-            ):
-                return VarZType(BoolType())
-            elif (
-                type_lhs is None
-                and
-                type_rhs is not None
-            ):
-                if (not self.compareTypeInDecl(type_rhs, BoolType())):
+            if (type_lhs is None):
+                self.visit(ast.left, param).typ = StringType()
+                type_rhs = self.visit(ast.right, param)
+                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+
+                if (type_rhs is None):
+                    self.visit(ast.right, param).typ = StringType()
+                    return VarZType(BoolType())
+                else:
+                    if (not self.compareTypeInDecl(type_rhs, StringType())):
+                        raise TypeMismatchInExpression()
+                    return VarZType(BoolType())
+            else: #type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, StringType())): # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                return VarZType(BoolType())
-            elif (
-                type_lhs is not None
-                and
-                type_rhs is None
-            ):
-                if (not self.compareTypeInDecl(type_lhs, BoolType())):
-                    raise TypeMismatchInExpression(ast)            
-            return VarZType(BoolType())
+                else: # if lhs is desired type
+                    type_rhs = self.visit(ast.right, param)
+                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                    
+                    if (type_rhs is None): # if rhs is none 
+                        self.visit(ast.right, param).typ = StringType()
+                        return VarZType(BoolType())
+                    else: # if rhs is not none --> check if desired type
+                        if (not self.compareTypeInDecl(type_rhs, StringType())):
+                            raise TypeMismatchInExpression()
+                        return VarZType(BoolType()) 
+            # self.prCyan("Operator: " +  str(op))
+            # if (
+            #     type_rhs is None
+            #     and
+            #     type_lhs is None
+            # ):
+            #     self.visit(ast.left, param).typ = StringType()
+            #     self.visit(ast.right, param).typ = StringType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is None
+            #     and
+            #     type_rhs is not None
+            # ):
+            #     if (not self.compareTypeInDecl(type_rhs, StringType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.left, param).typ = StringType()
+            #     return VarZType(BoolType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, StringType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.right, param).typ = StringType()
+            #     return VarZType(BoolType())
+            # else:
+            #     if (not self.compareTypeInDecl(type_lhs, StringType())
+            #         or
+            #         not self.compareTypeInDecl(type_rhs, StringType())
+            #         ):
+            #         raise TypeMismatchInExpression(ast)
+                
+            # return VarZType(BoolType())
         elif (
             op == '...'
         ):
-            self.prCyan("Operator: " +  str(op))
-            if (
-                type_rhs is None
-                and
-                type_lhs is None
-            ):
+            if (type_lhs is None):
                 self.visit(ast.left, param).typ = StringType()
-                self.visit(ast.right, param).typ = StringType()
-                self.prPurple("type_lhs: " + str(self.visit(ast.left, param).typ))
-                self.prPurple("type_rhs: " + str(self.visit(ast.right, param).typ))
-                return VarZType(StringType())
-            elif (
-                type_lhs is None
-                and
-                type_rhs is not None
-            ):
-                if (not self.compareTypeInDecl(type_rhs, StringType())):
+                type_rhs = self.visit(ast.right, param)
+                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+
+                if (type_rhs is None):
+                    self.visit(ast.right, param).typ = StringType()
+                    return VarZType(StringType())
+                else:
+                    if (not self.compareTypeInDecl(type_rhs, StringType())):
+                        raise TypeMismatchInExpression()
+                    return VarZType(StringType())
+            else: #type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, StringType())): # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                self.visit(ast.left, param).typ = StringType()                
-                return VarZType(StringType())
-            elif (
-                type_lhs is not None
-                and
-                type_rhs is None
-            ):
-                if (not self.compareTypeInDecl(type_lhs, StringType())):
-                    raise TypeMismatchInExpression(ast)
-                self.visit(ast.right, param).typ = StringType()       
-            else:
-                if (not self.compareTypeInDecl(type_lhs, StringType())
-                    or
-                    not self.compareTypeInDecl(type_rhs, StringType())
-                    ):
-                    raise TypeMismatchInExpression(ast)
-            return VarZType(StringType())
+                else: # if lhs is desired type
+                    type_rhs = self.visit(ast.right, param)
+                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                    
+                    if (type_rhs is None): # if rhs is none 
+                        self.visit(ast.right, param).typ = StringType()
+                        return VarZType(StringType())
+                    else: # if rhs is not none --> check if desired type
+                        if (not self.compareTypeInDecl(type_rhs, StringType())):
+                            raise TypeMismatchInExpression()
+                        return VarZType(StringType()) 
+            # self.prCyan("Operator: " +  str(op))
+            # if (
+            #     type_rhs is None
+            #     and
+            #     type_lhs is None
+            # ):
+            #     self.visit(ast.left, param).typ = StringType()
+            #     self.visit(ast.right, param).typ = StringType()
+            #     self.prPurple("type_lhs: " + str(self.visit(ast.left, param).typ))
+            #     self.prPurple("type_rhs: " + str(self.visit(ast.right, param).typ))
+            #     return VarZType(StringType())
+            # elif (
+            #     type_lhs is None
+            #     and
+            #     type_rhs is not None
+            # ):
+            #     if (not self.compareTypeInDecl(type_rhs, StringType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.left, param).typ = StringType()                
+            #     return VarZType(StringType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, StringType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     self.visit(ast.right, param).typ = StringType()       
+            # else:
+            #     if (not self.compareTypeInDecl(type_lhs, StringType())
+            #         or
+            #         not self.compareTypeInDecl(type_rhs, StringType())
+            #         ):
+            #         raise TypeMismatchInExpression(ast)
+            # return VarZType(StringType())
     def visitUnaryOp(self, ast : UnaryOp, param):
         self.prYellow("\n\visitUnaryOp" + str(ast.operand) + " " + str(ast.op))
+        operand = self.visit(ast.operand, param)
+        operand = operand.typ if isinstance(operand, ZCodeType) else operand
+        op = ast.op
+        self.prPurple("operand: " + str(operand))
+        if (
+            op == '+'
+            or
+            op == '-'
+        ):
+            self.prCyan("Operator: " +  str(op))
+            if (
+                operand is None
+            ):
+                operand = NumberType()
+                return VarZType(NumberType())
+            else:
+                if (not self.compareTypeInDecl(operand, NumberType())):
+                    raise TypeMismatchInExpression(ast)
+                self.visit(operand, param).typ = NumberType()
+                return VarZType(NumberType())
+        elif(
+            op == 'not'
+        ):
+            self.prCyan("Operator: " +  str(op))
+            if (
+                operand is None
+            ):
+                operand = BoolType()
+                return VarZType(BoolType())
+            else:
+                if (not self.compareTypeInDecl(operand, BoolType())):
+                    raise TypeMismatchInExpression(ast)
+                self.visit(operand, param).typ = BoolType()
+                return VarZType(BoolType())
+            # elif (
+            #     type_lhs is not None
+            #     and
+            #     type_rhs is None
+            # ):
+            #     if (not self.compareTypeInDecl(type_lhs, NumberType())):
+            #         raise TypeMismatchInExpression(ast)
+            #     type_lhs = NumberType()
+            #     type_rhs = NumberType()                
+            #     return VarZType(NumberType())
+
+        
 
     def visitArrayCell(self, ast, param):
         self.debugLogs(ast, param, "visitArrayCell")

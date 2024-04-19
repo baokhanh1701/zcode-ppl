@@ -736,17 +736,19 @@ class CheckSuite(unittest.TestCase):
         self.assertTrue(TestChecker.test(input, expect, 468))
         
 
-        # input = """
-        #     func main() begin
-        #         dynamic left
-        #         dynamic right
+        input = """
+            func main() begin
+                dynamic left
+                dynamic right
                 
-        #         var c <- - left
-        #         left <- 1
-        #     end
-        # """
-        # expect = ""
-        # self.assertTrue(TestChecker.test(input, expect, 469))
+                var c <- - left
+                var d <- + 1
+                var e <- not true
+                left <- 1
+            end
+        """
+        expect = ""
+        self.assertTrue(TestChecker.test(input, expect, 469))
         
         # input = """
         #     func main() begin
@@ -821,24 +823,26 @@ class CheckSuite(unittest.TestCase):
 #         expect = ""
 #         self.assertTrue(TestChecker.test(input, expect, 476))
         
-#         input = """
-#             func VoTien()
-#             func main() begin
-#                 number VoTien_ <- VoTien()
-#             end
-#             func VoTien() begin
-#             end
-#         """
-#         # expect = "???"
-#         expect = "Type Mismatch In Statement: Return()"
-#         self.assertTrue(TestChecker.test(input, expect, 477))
+        # input = """
+        #     func VoTien()
+        #     func main() begin
+        #         number VoTien_ <- VoTien()
+        #     end
+        #     func VoTien() begin
+        #     end
+        # """
+        # # expect = "???"
+        # expect = "Type Mismatch In Statement: Return()"
+        # self.assertTrue(TestChecker.test(input, expect, 477))
         
-#         input = """
-#             dynamic VoTien
-#             var x <- VoTien and (VoTien > VoTien)
-#         """
-#         expect = "Type Mismatch In Expression: BinaryOp(>, Id(VoTien), Id(VoTien))"
-#         self.assertTrue(TestChecker.test(input, expect, 477))
+        input = """
+            dynamic VoTien
+            dynamic BK
+            var x <- VoTien == (VoTien > VoTien)
+            var y <- BK and (BK + BK)
+        """
+        expect = "Type Mismatch In Expression: BinaryOp(>, Id(VoTien), Id(VoTien))"
+        self.assertTrue(TestChecker.test(input, expect, 477))
 
         input = """
             dynamic VoTien
@@ -855,20 +859,20 @@ class CheckSuite(unittest.TestCase):
         expect = "Type Mismatch In Expression: BinaryOp(..., BinaryOp(>, Id(VoTien), Id(VoTien)), BinaryOp(<, Id(VoTien), Id(VoTien)))"
         self.assertTrue(TestChecker.test(input, expect, 477))
 
-#     def test_7_full(self):
-#         input = """
-#             func areDivisors(number num1, number num2)
-#             return ((num1 % num2 = 0) or (num2 % num1 = 0))
-#             func main()
-#             begin
-#             var num1 <- readNumber()
-#             var num2 <- readNumber()
-#             if (areDivisors(num1, num2)) writeString("Yes")
-#             else writeString("No")
-#             end
-#         """
-#         expect = ""
-#         self.assertTrue(TestChecker.test(input, expect, 499))
+    # def test_7_full(self):
+    #     input = """
+    #         func areDivisors(number num1, number num2)
+    #         return ((num1 % num2 = 0) or (num2 % num1 = 0))
+    #         func main()
+    #         begin
+    #         var num1 <- readNumber()
+    #         var num2 <- readNumber()
+    #         if (areDivisors(num1, num2)) writeString("Yes")
+    #         else writeString("No")
+    #         end
+    #     """
+    #     expect = ""
+    #     self.assertTrue(TestChecker.test(input, expect, 499))
         
 #         input = """
 # func isPrime(number x)
