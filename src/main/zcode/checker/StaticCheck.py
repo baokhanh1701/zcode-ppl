@@ -371,9 +371,10 @@ class StaticChecker(BaseVisitor, Utils):
 
         for i in range(len(list_of_params)):
             func_args = self.visit(list_of_args[i], param)
-            self.prLightGray("func_args: " + func_args)
-            self.prLightGray("list_of_params[i]: " + list_of_params[i])
-            self.prRed("check type: " + self.compareTypeInDecl(list_of_params[i], func_args))
+            func_args = func_args.typ if isinstance(func_args, VarZType) else func_args
+            self.prLightGray("func_args: " + str(func_args))
+            self.prLightGray("list_of_params[i]: " + str(list_of_params[i]))
+            self.prRed("check type: " + str(self.compareTypeInDecl(list_of_params[i], func_args)))
             if (not self.compareTypeInDecl(list_of_params[i], func_args)):
                 raise TypeMismatchInExpression(ast)
         self.prGreen("PASS: not same types args and params")
@@ -410,6 +411,7 @@ class StaticChecker(BaseVisitor, Utils):
 
         for i in range(len(list_of_params)):
             func_args = self.visit(list_of_args[i], param)
+            func_args = func_args.typ if isinstance(func_args, VarZType) else func_args
             self.prLightGray("func_args: ")
             print(func_args)
             self.prLightGray("list_of_params[i]: ")
