@@ -1,0 +1,8 @@
+## infertype for function 
+func f()
+func main() begin 
+    number a[2,3] 
+    a[0,0] <- f()
+    writeNumber(f()*a[1,2])
+    f()
+end

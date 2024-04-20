@@ -1,0 +1,6 @@
+## type cannot be infer 
+func f()
+func main() 
+begin 
+    var a <- f()
+end 

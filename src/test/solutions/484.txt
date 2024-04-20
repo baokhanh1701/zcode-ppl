@@ -1,0 +1,1 @@
+Type Mismatch In Statement: AssignStmt(Id(a), BinaryOp(or, BinaryOp(==, BinaryOp(..., Id(b), StringLit(abc)), StringLit(abcd)), ArrayCell(Id(c), [Id(a), Id(a)])))

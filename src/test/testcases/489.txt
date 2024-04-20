@@ -1,0 +1,7 @@
+## type cannot be infer 
+func f()
+func main() begin 
+    dynamic a 
+    dynamic b 
+    var x <- [a,b,f()]
+end

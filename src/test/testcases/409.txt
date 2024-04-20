@@ -1,0 +1,4 @@
+## Redeclare 
+dynamic foo <- 2
+func foo() return 
+func main() return

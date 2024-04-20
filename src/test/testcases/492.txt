@@ -1,0 +1,7 @@
+## for 
+func main() begin 
+    number i<-1 
+    bool c <- true 
+    for i until c by -1*1 
+        dynamic i <- c 
+end 

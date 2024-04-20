@@ -1,0 +1,8 @@
+## check type infer (in this testcase, when call if or for, it will also infer type)
+func main() begin 
+    dynamic i
+    dynamic j
+    if (i)  j <- 1 
+    elif (i and (j=1)) j<-2 
+    else j<-"abc"
+end

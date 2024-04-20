@@ -1,0 +1,11 @@
+## factorial
+func fact(number a) begin
+            if ((a=0) or (a=1)) return 1
+            else begin
+                number temp <- face(a-1)
+                return temp*a
+            end
+        end
+        func main() begin
+            writeNumber(fact(4))
+        end

@@ -1,0 +1,5 @@
+## function scope 
+func f(number a) begin 
+    dynamic  a <- 2
+end
+func main() return 

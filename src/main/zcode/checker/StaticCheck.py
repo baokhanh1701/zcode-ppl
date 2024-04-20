@@ -48,21 +48,21 @@ class StaticChecker(BaseVisitor, Utils):
             "writeString": FuncZType([StringType()], VoidType(), True)
         }]
 
-    def prRed(self,skk): print("\033[91m {}\033[00m".format(skk))
+    def prRed(self, skk): print("\033[91m {}\033[00m".format(skk))
 
-    def prGreen(self,skk): print("\033[92m {}\033[00m".format(skk))
+    def prGreen(self, skk): print("\033[92m {}\033[00m".format(skk))
 
-    def prYellow(self,skk): print("\033[93m {}\033[00m" .format(skk))
+    def prYellow(self, skk): print("\033[93m {}\033[00m" .format(skk))
 
-    def prLightPurple(self,skk): print("\033[94m {}\033[00m" .format(skk))
+    def prLightPurple(self, skk): print("\033[94m {}\033[00m" .format(skk))
 
-    def prPurple(self,skk): print("\033[95m {}\033[00m" .format(skk))
+    def prPurple(self, skk): print("\033[95m {}\033[00m" .format(skk))
 
-    def prCyan(self,skk): print("\033[96m {}\033[00m" .format(skk))
+    def prCyan(self, skk): print("\033[96m {}\033[00m" .format(skk))
 
-    def prLightGray(self,skk): print("\033[97m {}\033[00m" .format(skk))
+    def prLightGray(self, skk): print("\033[97m {}\033[00m" .format(skk))
 
-    def prBlack(self,skk): print("\033[98m {}\033[00m" .format(skk))
+    def prBlack(self, skk): print("\033[98m {}\033[00m" .format(skk))
 
     def check(self):
         self.visit(self.ast, [{}])
@@ -95,20 +95,8 @@ class StaticChecker(BaseVisitor, Utils):
             else:
                 return (str(lhs) == str(rhs))
 
-    def comparListTypeInDecl(self, lhs, rhs):
-        size_left = len(lhs)
-        size_right = len(rhs)
-        if size_left != size_right:
-            return False
-        else:
-            for i in range(size_right):
-                if not self.compareTypeInDecl(lhs[i], rhs[i]):
-                    return False
-            else:
-                return True
-
     def visitProgram(self, ast, param):
-        self.prRed("visitProgram")
+        self.prYellow("visitProgram")
         for i in ast.decl:
             self.visit(i, param)
 
@@ -138,17 +126,20 @@ class StaticChecker(BaseVisitor, Utils):
             raise Redeclared(Variable(), ast.name.name)
 
         # create a new param that has type is equal to current Type
+        # if (isinstance(ast.varType, ArrayType)):
+        #     self.prCyan("ast.varType:   " + str(ast.varType))
+        #     param[0][ast.name.name] = ArrayType(len(), ast.varType)
         param[0][ast.name.name] = VarZType(ast.varType)
 
         # If exist variable initialization --> visit
         if (ast.varInit):
-            lhs = param[0][ast.name.name] # vardecl type object
+            lhs = param[0][ast.name.name]  # vardecl type object
             rhs = self.visit(ast.varInit, param)
-            self.prRed(str(lhs.typ))
+            # self.prRed(str(lhs.typ))
 
             self.prLightGray("vardecl lhs: " + str(lhs))
             self.prLightGray("vardecl rhs: " + str(rhs))
-            
+
             if (isinstance(rhs, NumberType)
                 or
                 isinstance(rhs, BoolType)
@@ -157,30 +148,62 @@ class StaticChecker(BaseVisitor, Utils):
                 ):
                 rhs = VarZType(rhs)
             elif (isinstance(rhs, ArrayType)):
-                rhs = ArrayZType(rhs.size, ArrayType(rhs.size, rhs.eleType))
-
+                rhs = ArrayZType(rhs.size, rhs.eleType)
+            
+            # if ((isinstance(rhs, ArrayZType)) and (isinstance(lhs, VarZType))):
+            #     raise TypeMismatchInStatement(ast)
+            # if (rhs is not ArrayZType):
+            self.prRed("rhs:"  + str(rhs))
+            self.prRed("lhs:"  + str(lhs))
+            self.prRed("rhs.typ:"  + str(rhs.typ))
+            self.prRed("lhs.typ:"  + str(lhs.typ))
             if (rhs.typ is None
                 and
                 lhs.typ is None
                 ):
-                    raise TypeCannotBeInferred(ast)
+                self.prGreen("Both rhs.typ and lhs.typ is None")
+                raise TypeCannotBeInferred(ast)
             elif (lhs.typ is not None
                     and
                     rhs.typ is None
-                    ):
+                ):
+                self.prGreen("lhs.typ is not None and rhs.typ is None")
+                if (isinstance(rhs, ArrayZType)):
+                    if (isinstance(lhs.typ, NumberType)
+                        or isinstance(lhs.typ, StringType)
+                        or isinstance(lhs.typ, BoolType)
+                        ):
+                        raise TypeMismatchInStatement(ast)
+                    if (isinstance(lhs.typ, ArrayType)):
+                        if not self.compareTypeInDecl(lhs.typ.eleType, rhs.typ):
+                            raise TypeMismatchInStatement(ast)
+                    # if (not isinstance(lhs.typ, ArrayType)):
+                    #     self.prRed("case 1")
+                    #     raise TypeMismatchInStatement(ast)
+                    # else:
+                    #     if not self.compareTypeInDecl(lhs.typ.eleType, rhs.typ):
+                    #         raise TypeMismatchInStatement(ast)
                 rhs.typ = lhs.typ
             elif (lhs.typ is None
                     and
                     rhs.typ is not None):
+                self.prGreen("lhs.typ is None and rhs.typ is not None")
                 lhs.typ = rhs.typ
             else:
-                if not self.compareTypeInDecl(ast.varType, rhs.typ):
-                    raise TypeMismatchInStatement(ast)
-            self.prRed(str(lhs.typ))
+                self.prGreen("Both rhs.typ and lhs.typ is not None")
+                if (isinstance(rhs, ArrayZType)):
+                    if (isinstance(lhs.typ, ArrayType)):
+                        # if not self.compareTypeInDecl(lhs.typ.eleType, rhs.typ):
+                        if not self.compareTypeInDecl(lhs.typ.eleType, rhs.typ):
+                            raise TypeMismatchInStatement(ast)
+                else:
+                    if not self.compareTypeInDecl(lhs.typ, rhs.typ):
+                        raise TypeMismatchInStatement(ast)
+            # self.prRed(str(lhs.typ))
 
         print("-----param: ", param)
 
-        print("```pass```")
+        self.prGreen("```pass visitVarDecl```")
 
         # return None
 
@@ -191,9 +214,9 @@ class StaticChecker(BaseVisitor, Utils):
 
         # Check if exist in list of function
         if (check_exists_func):
-            self.prRed(str(check_exists_func))
-            self.prRed(str(check_exists_func.typ))
-            
+            # self.prRed(str(check_exists_func))
+            # self.prRed(str(check_exists_func.typ))
+
             if (check_exists_func.body):
                 raise Redeclared(Function(), ast.name.name)
             else:
@@ -238,16 +261,17 @@ class StaticChecker(BaseVisitor, Utils):
             self.function.body = True
 
             if self.Return is None:
-                checker = self.list_of_function[0][ast.name.name].typ if isinstance(self.list_of_function[0][ast.name.name], FuncZType) else self.list_of_function[0][ast.name.name]
-                self.prLightPurple("function type: " + str(self.list_of_function[0][ast.name.name].typ))
+                checker = self.list_of_function[0][ast.name.name].typ if isinstance(
+                    self.list_of_function[0][ast.name.name], FuncZType) else self.list_of_function[0][ast.name.name]
+                self.prLightPurple(
+                    "function type: " + str(self.list_of_function[0][ast.name.name].typ))
                 self.prLightPurple("checker: " + str(checker))
                 if checker is None:
                     self.list_of_function[0][ast.name.name].typ = VoidType()
-                    self.prLightPurple("function type - after assigning type: " + str(self.list_of_function[0][ast.name.name].typ))
+                    self.prLightPurple("function type - after assigning type: " +
+                                       str(self.list_of_function[0][ast.name.name].typ))
                 elif (not isinstance(checker, VoidType)):
-                    raise TypeMismatchInStatement(Return(None))                
-        
-
+                    raise TypeMismatchInStatement(Return(None))
 
     def visitId(self, ast: Id, param):
         # self.debugLogs(ast, param, "visitId")
@@ -287,25 +311,25 @@ class StaticChecker(BaseVisitor, Utils):
 
         for i in range(len(list_of_params)):
             func_args = self.visit(list_of_args[i], param)
-            func_args = func_args.typ if isinstance(func_args, VarZType) else func_args
+            func_args = func_args.typ if isinstance(
+                func_args, VarZType) else func_args
             self.prLightGray("func_args: " + str(func_args))
             self.prLightGray("list_of_params[i]: " + str(list_of_params[i]))
-            self.prRed("check type: " + str(self.compareTypeInDecl(list_of_params[i], func_args)))
+            # self.prRed(
+            #     "check type: " + str(self.compareTypeInDecl(list_of_params[i], func_args)))
             if (not self.compareTypeInDecl(list_of_params[i], func_args)):
                 raise TypeMismatchInExpression(ast)
         self.prGreen("PASS: not same types args and params")
 
         if call_to_function.typ is None:
             return call_to_function
-                
+
         if self.compareTypeInDecl(call_to_function.typ, VoidType):
             raise TypeMismatchInExpression(ast)
-    
+
         self.prGreen("PASS: Function called is VoidType")
 
-
         return VarZType(call_to_function.typ)
-
 
     def visitCallStmt(self, ast, param):
         self.prYellow("\n\nvisitCallStmt:  " + str(ast.name.name))
@@ -326,12 +350,14 @@ class StaticChecker(BaseVisitor, Utils):
 
         for i in range(len(list_of_params)):
             func_args = self.visit(list_of_args[i], param)
-            func_args = func_args.typ if isinstance(func_args, VarZType) else func_args
+            func_args = func_args.typ if isinstance(
+                func_args, VarZType) else func_args
             self.prLightGray("func_args: ")
             print(func_args)
             self.prLightGray("list_of_params[i]: ")
             print(list_of_params[i])
-            self.prRed("check type: " + str(self.compareTypeInDecl(list_of_params[i], func_args)))
+            # self.prRed(
+            #     "check type: " + str(self.compareTypeInDecl(list_of_params[i], func_args)))
             if (
                 not self.compareTypeInDecl(list_of_params[i], func_args)
             ):
@@ -340,12 +366,12 @@ class StaticChecker(BaseVisitor, Utils):
 
         if call_to_function.typ is None:
             return call_to_function
-                
+
         if self.compareTypeInDecl(call_to_function.typ, VoidType):
             raise TypeMismatchInStatement(ast)
-    
+
         self.prGreen("PASS: Function called is VoidType")
-    
+
         return VarZType(call_to_function.typ)
 
     def visitIf(self, ast: If, param):
@@ -453,7 +479,8 @@ class StaticChecker(BaseVisitor, Utils):
                     raise TypeCannotBeInferred(ast)
                 else:
                     self.Return = expr_type
-                self.prGreen("PASS: Type cannot be inferred due to expr_type is None")
+                self.prGreen(
+                    "PASS: Type cannot be inferred due to expr_type is None")
         else:
             self.Return = VoidType()
 
@@ -551,12 +578,13 @@ class StaticChecker(BaseVisitor, Utils):
             raise TypeMismatchInStatement(ast)
 
     def visitBinaryOp(self, ast: BinaryOp, param):
-        self.prYellow("\n\nvisitBinaryOp: " + str(ast.left) + " " + str(ast.right))
+        self.prYellow("\n\nvisitBinaryOp: " +
+                      str(ast.left) + " " + str(ast.right))
         type_lhs = self.visit(ast.left, param)
 
         type_lhs = type_lhs.typ if isinstance(type_lhs, VarZType) else type_lhs
         op = ast.op
-        self.prCyan("Operator: " +  str(op))
+        self.prCyan("Operator: " + str(op))
         if (
             op == '+'
             or
@@ -568,11 +596,12 @@ class StaticChecker(BaseVisitor, Utils):
             or
             op == '%'
         ):
-            
+
             if (type_lhs is None):
                 self.visit(ast.left, param).typ = NumberType()
                 type_rhs = self.visit(ast.right, param)
-                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                type_rhs = type_rhs.typ if isinstance(
+                    type_rhs, VarZType) else type_rhs
 
                 if (type_rhs is None):
                     self.visit(ast.right, param).typ = NumberType()
@@ -581,20 +610,21 @@ class StaticChecker(BaseVisitor, Utils):
                     if (not self.compareTypeInDecl(type_rhs, NumberType())):
                         raise TypeMismatchInExpression()
                     return VarZType(NumberType())
-            else: #type_lhs is not None
-                if (not self.compareTypeInDecl(type_lhs, NumberType())): # if lhs is not desired type
+            else:  # type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, NumberType())):  # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                else: # if lhs is desired type
+                else:  # if lhs is desired type
                     type_rhs = self.visit(ast.right, param)
-                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-                    
-                    if (type_rhs is None): # if rhs is none 
+                    type_rhs = type_rhs.typ if isinstance(
+                        type_rhs, VarZType) else type_rhs
+
+                    if (type_rhs is None):  # if rhs is none
                         self.visit(ast.right, param).typ = NumberType()
                         return VarZType(NumberType())
-                    else: # if rhs is not none --> check if desired type
+                    else:  # if rhs is not none --> check if desired type
                         if (not self.compareTypeInDecl(type_rhs, NumberType())):
                             raise TypeMismatchInExpression()
-                        return VarZType(NumberType())                        
+                        return VarZType(NumberType())
 
         elif (
             op == '='
@@ -612,7 +642,8 @@ class StaticChecker(BaseVisitor, Utils):
             if (type_lhs is None):
                 self.visit(ast.left, param).typ = NumberType()
                 type_rhs = self.visit(ast.right, param)
-                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                type_rhs = type_rhs.typ if isinstance(
+                    type_rhs, VarZType) else type_rhs
 
                 if (type_rhs is None):
                     self.visit(ast.right, param).typ = NumberType()
@@ -621,20 +652,21 @@ class StaticChecker(BaseVisitor, Utils):
                     if (not self.compareTypeInDecl(type_rhs, NumberType())):
                         raise TypeMismatchInExpression()
                     return VarZType(BoolType())
-            else: #type_lhs is not None
-                if (not self.compareTypeInDecl(type_lhs, NumberType())): # if lhs is not desired type
+            else:  # type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, NumberType())):  # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                else: # if lhs is desired type
+                else:  # if lhs is desired type
                     type_rhs = self.visit(ast.right, param)
-                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-                    
-                    if (type_rhs is None): # if rhs is none 
+                    type_rhs = type_rhs.typ if isinstance(
+                        type_rhs, VarZType) else type_rhs
+
+                    if (type_rhs is None):  # if rhs is none
                         self.visit(ast.right, param).typ = NumberType()
                         return VarZType(BoolType())
-                    else: # if rhs is not none --> check if desired type
+                    else:  # if rhs is not none --> check if desired type
                         if (not self.compareTypeInDecl(type_rhs, NumberType())):
                             raise TypeMismatchInExpression()
-                        return VarZType(BoolType())                        
+                        return VarZType(BoolType())
 
         elif (
             op == 'and'
@@ -644,7 +676,8 @@ class StaticChecker(BaseVisitor, Utils):
             if (type_lhs is None):
                 self.visit(ast.left, param).typ = BoolType()
                 type_rhs = self.visit(ast.right, param)
-                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                type_rhs = type_rhs.typ if isinstance(
+                    type_rhs, VarZType) else type_rhs
 
                 if (type_rhs is None):
                     self.visit(ast.right, param).typ = BoolType()
@@ -653,62 +686,29 @@ class StaticChecker(BaseVisitor, Utils):
                     if (not self.compareTypeInDecl(type_rhs, BoolType())):
                         raise TypeMismatchInExpression()
                     return VarZType(BoolType())
-            else: #type_lhs is not None
-                if (not self.compareTypeInDecl(type_lhs, BoolType())): # if lhs is not desired type
+            else:  # type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, BoolType())):  # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                else: # if lhs is desired type
+                else:  # if lhs is desired type
                     type_rhs = self.visit(ast.right, param)
-                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-                    
-                    if (type_rhs is None): # if rhs is none 
+                    type_rhs = type_rhs.typ if isinstance(
+                        type_rhs, VarZType) else type_rhs
+
+                    if (type_rhs is None):  # if rhs is none
                         self.visit(ast.right, param).typ = BoolType()
                         return VarZType(BoolType())
-                    else: # if rhs is not none --> check if desired type
+                    else:  # if rhs is not none --> check if desired type
                         if (not self.compareTypeInDecl(type_rhs, BoolType())):
                             raise TypeMismatchInExpression()
-                        return VarZType(BoolType())                                    
-            # self.prCyan("Operator: " +  str(op))
-            # if (
-            #     type_rhs is None
-            #     and
-            #     type_lhs is None
-            # ):
-            #     self.visit(ast.left, param).typ = BoolType()
-            #     self.visit(ast.right, param).typ = BoolType()
-            #     return VarZType(BoolType())
-            # elif (
-            #     type_lhs is None
-            #     and
-            #     type_rhs is not None
-            # ):
-            #     if (not self.compareTypeInDecl(type_rhs, BoolType())):
-            #         raise TypeMismatchInExpression(ast)
-            #     self.visit(ast.left, param).typ = BoolType()
-            #     return VarZType(BoolType())
-            # elif (
-            #     type_lhs is not None
-            #     and
-            #     type_rhs is None
-            # ):
-            #     if (not self.compareTypeInDecl(type_lhs, BoolType())):
-            #         raise TypeMismatchInExpression(ast)
-            #     self.visit(ast.right, param).typ = BoolType()
-            #     return VarZType(BoolType())
-            # else:
-            #     if (not self.compareTypeInDecl(type_lhs, BoolType())
-            #         or
-            #         not self.compareTypeInDecl(type_rhs, BoolType())
-            #         ):
-            #         raise TypeMismatchInExpression(ast)
-                
-            # return VarZType(BoolType())
+                        return VarZType(BoolType())
         elif (
             op == '=='
         ):
             if (type_lhs is None):
                 self.visit(ast.left, param).typ = StringType()
                 type_rhs = self.visit(ast.right, param)
-                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                type_rhs = type_rhs.typ if isinstance(
+                    type_rhs, VarZType) else type_rhs
 
                 if (type_rhs is None):
                     self.visit(ast.right, param).typ = StringType()
@@ -717,20 +717,21 @@ class StaticChecker(BaseVisitor, Utils):
                     if (not self.compareTypeInDecl(type_rhs, StringType())):
                         raise TypeMismatchInExpression()
                     return VarZType(BoolType())
-            else: #type_lhs is not None
-                if (not self.compareTypeInDecl(type_lhs, StringType())): # if lhs is not desired type
+            else:  # type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, StringType())):  # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                else: # if lhs is desired type
+                else:  # if lhs is desired type
                     type_rhs = self.visit(ast.right, param)
-                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-                    
-                    if (type_rhs is None): # if rhs is none 
+                    type_rhs = type_rhs.typ if isinstance(
+                        type_rhs, VarZType) else type_rhs
+
+                    if (type_rhs is None):  # if rhs is none
                         self.visit(ast.right, param).typ = StringType()
                         return VarZType(BoolType())
-                    else: # if rhs is not none --> check if desired type
+                    else:  # if rhs is not none --> check if desired type
                         if (not self.compareTypeInDecl(type_rhs, StringType())):
                             raise TypeMismatchInExpression()
-                        return VarZType(BoolType()) 
+                        return VarZType(BoolType())
 
         elif (
             op == '...'
@@ -738,7 +739,8 @@ class StaticChecker(BaseVisitor, Utils):
             if (type_lhs is None):
                 self.visit(ast.left, param).typ = StringType()
                 type_rhs = self.visit(ast.right, param)
-                type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
+                type_rhs = type_rhs.typ if isinstance(
+                    type_rhs, VarZType) else type_rhs
 
                 if (type_rhs is None):
                     self.visit(ast.right, param).typ = StringType()
@@ -747,23 +749,23 @@ class StaticChecker(BaseVisitor, Utils):
                     if (not self.compareTypeInDecl(type_rhs, StringType())):
                         raise TypeMismatchInExpression()
                     return VarZType(StringType())
-            else: #type_lhs is not None
-                if (not self.compareTypeInDecl(type_lhs, StringType())): # if lhs is not desired type
+            else:  # type_lhs is not None
+                if (not self.compareTypeInDecl(type_lhs, StringType())):  # if lhs is not desired type
                     raise TypeMismatchInExpression(ast)
-                else: # if lhs is desired type
+                else:  # if lhs is desired type
                     type_rhs = self.visit(ast.right, param)
-                    type_rhs = type_rhs.typ if isinstance(type_rhs, VarZType) else type_rhs
-                    
-                    if (type_rhs is None): # if rhs is none 
+                    type_rhs = type_rhs.typ if isinstance(
+                        type_rhs, VarZType) else type_rhs
+
+                    if (type_rhs is None):  # if rhs is none
                         self.visit(ast.right, param).typ = StringType()
                         return VarZType(StringType())
-                    else: # if rhs is not none --> check if desired type
+                    else:  # if rhs is not none --> check if desired type
                         if (not self.compareTypeInDecl(type_rhs, StringType())):
                             raise TypeMismatchInExpression()
-                        return VarZType(StringType()) 
+                        return VarZType(StringType())
 
-
-    def visitUnaryOp(self, ast : UnaryOp, param):
+    def visitUnaryOp(self, ast: UnaryOp, param):
         self.prYellow("\n\visitUnaryOp" + str(ast.operand) + " " + str(ast.op))
         operand = self.visit(ast.operand, param)
         operand = operand.typ if isinstance(operand, ZCodeType) else operand
@@ -774,7 +776,7 @@ class StaticChecker(BaseVisitor, Utils):
             or
             op == '-'
         ):
-            self.prCyan("Operator: " +  str(op))
+            self.prCyan("Operator: " + str(op))
             if (
                 operand is None
             ):
@@ -785,10 +787,10 @@ class StaticChecker(BaseVisitor, Utils):
                     raise TypeMismatchInExpression(ast)
                 self.visit(ast.operand, param).typ = NumberType()
                 return VarZType(NumberType())
-        elif(
+        elif (
             op == 'not'
         ):
-            self.prCyan("Operator: " +  str(op))
+            self.prCyan("Operator: " + str(op))
             if (
                 operand is None
             ):
@@ -800,8 +802,7 @@ class StaticChecker(BaseVisitor, Utils):
                 self.visit(operand, param).typ = BoolType()
                 return VarZType(BoolType())
 
-
-    def visitArrayCell(self, ast : ArrayCell, param):
+    def visitArrayCell(self, ast: ArrayCell, param):
         self.prYellow("\n\n visitArrayCell: " + str(ast))
         array = self.visit(ast.arr, param)
         array = array.typ if isinstance(array, ZCodeType) else array
@@ -812,7 +813,7 @@ class StaticChecker(BaseVisitor, Utils):
         if (len(array.size) < len(ast.idx)):
             raise TypeMismatchInExpression(ast)
         self.prGreen("PASS: size of array is less than size ast.index")
-    
+
         self.prPurple("len(array): " + str(len(array.size)))
         self.prPurple("len(ast.idx): " + str(len(ast.idx)))
         self.prGreen("PASS: len of array is less than len of index")
@@ -824,9 +825,11 @@ class StaticChecker(BaseVisitor, Utils):
                 if (checker.typ is None):
                     if (self.list_of_function[0].get(index.name.name)
                         and
-                        isinstance(self.list_of_function[0].get(index.name.name), FuncZType)
+                        isinstance(self.list_of_function[0].get(
+                                    index.name.name), FuncZType)
                         ):
-                        self.list_of_function[0].get(index.name.name).typ = NumberType()
+                        self.list_of_function[0].get(
+                            index.name.name).typ = NumberType()
 
             elif isinstance(checker, VarZType):
                 # for scope in param:
@@ -834,51 +837,104 @@ class StaticChecker(BaseVisitor, Utils):
                     if (scope.get(index.name) and isinstance(scope.get(index.name), VarZType)):
                         scope.get(index.name).typ = NumberType()
                         break
-                                
+
             elif (not isinstance(self.visit(index, param), NumberType)):
                 raise TypeMismatchInExpression(ast)
             self.prGreen("PASS: visit(index) is not NumberType")
 
         if (len(array.size) == len(ast.idx)):
             return VarZType(array.eleType)
-        
+
         if len(array.size) > len(ast.idx):
             remaining_dimensions = array.size[len(ast.idx):]
             return ArrayZType(remaining_dimensions, array.eleType)
 
-
     def visitArrayLiteral(self, ast, param):
         self.prYellow("\n\nvisitArrayLiteral: " + str(ast))
-
-        checker = None
+        #  ast: VarDecl(Id(a), ArrayType([3.0], NumberType), None, ArrayLit(Id(x), NumLit(1.0), NumLit(2.0)))
+        checker = None # check array type
         for item in ast.value:
             checker = self.visit(item, param)
-            checker = checker.typ if isinstance(checker, ZCodeType) else checker
-            print("checker: ", checker)
-            
+            checker = checker.typ if isinstance(
+                checker, ZCodeType) else checker
+
             if ((self.compareTypeInDecl(checker, StringType)
-                or self.compareTypeInDecl(checker, BoolType)
-                or self.compareTypeInDecl(checker, NumberType)
-                )
+                 or self.compareTypeInDecl(checker, BoolType)
+                 or self.compareTypeInDecl(checker, NumberType)
+                 )
                 and checker is not ArrayType
                 ):
                 self.prLightGray("ast.value is BSN and not an arrayType")
                 break
-            elif (checker is None and checker is not ArrayType):
-                self.prLightGray("ast.value is None and is not ArrayType")
-                
-                return ArrayZType([len(ast.value)], checker)
-
+        print("checker: ", checker)
+        if (
+            (self.compareTypeInDecl(checker, StringType())
+            or
+            self.compareTypeInDecl(checker, BoolType())
+            or
+            self.compareTypeInDecl(checker, NumberType()))
+            and checker is not ArrayType
+            and checker is not None
+        ):
+            for item in ast.value:
+                type_expr = self.visit(item, param)
+                type_expr = type_expr.typ if isinstance(
+                    type_expr, ZCodeType) else type_expr
+                if (type_expr is None):
+                    self.visit(item, param).typ = checker
+                    self.prRed("type_expr: " + str(type_expr))
+                    self.prRed("self.visit(item, param).typ: " + str(self.visit(item, param).typ))
+                if (not self.compareTypeInDecl(type_expr, checker)
+                    and
+                    type_expr is not None
+                    ):
+                    raise TypeMismatchInExpression(ast)
+            return ArrayType([len(ast.value)], checker)
+        
+        elif checker is None:
+            self.prRed("checker is None")
+            type_expr = None
+            self.prRed("type_expr: " + str(type_expr))
+            for item in ast.value:
+                type_expr = self.visit(item, param)
+                type_expr = type_expr.typ if isinstance(
+                    type_expr, ZCodeType) else type_expr
+                if (type_expr is ArrayType):
+                    self.prLightGray("type_expr is BSN and not an arrayType")
+                    break
             
+            self.prRed("type_expr: " + str(type_expr))
+
+            if (type_expr is not None):
+                for item in ast.value:
+                    type_expr_checker = self.visit(item, param)
+                    type_expr_checker = type_expr_checker.typ if isinstance(
+                        type_expr_checker, ZCodeType) else type_expr_checker
+                    if (type_expr_checker is None):
+                        self.visit(item, param).typ = type_expr
+                        self.prRed("type_expr_checker: " + str(type_expr_checker))
+                        self.prRed("self.visit(item, param).typ: " + str(self.visit(item, param).typ))
+                    if (type_expr_checker is ArrayType):
+                        if not self.compareTypeInDecl(type_expr_checker, type_expr):
+                            raise TypeMismatchInExpression(ast)
+                    if (not self.compareTypeInDecl(type_expr, type_expr_checker)
+                        and
+                        type_expr is not None
+                        ):
+                        raise TypeMismatchInExpression(ast)
+                return ArrayType([len(ast.value)], type_expr)
+            else:
+                self.prRed("checker is None and type_expr is None")
+                return ArrayType([len(ast.value)], None)
+
         typ = self.visit(ast.value[0], param)
         typ = typ.typ if isinstance(typ, ZCodeType) else typ
         if type(typ) in [StringType, BoolType, NumberType]:
             return ArrayType([len(ast.value)], typ)
-        self.prRed("typ: " +  str(typ))
+        self.prRed("typ: " + str(typ))
         if (typ is None):
             return ArrayType([len(ast.value)], typ)
         return ArrayType([len(ast.value)] + typ.size, typ.eleType)
-
 
     def visitBlock(self, ast: Block, param):
         print("visitBlock")

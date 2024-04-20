@@ -1,0 +1,14 @@
+## if 
+func f(number a,string b) return true
+func main() begin 
+    dynamic a 
+    dynamic b
+    dynamic c 
+    bool d 
+    if (d) c<-f(a,b)
+    elif (c or d) begin 
+        number f
+        number d <- 123
+    end 
+    elif (f(1,"abc")) c <-d+1 
+end

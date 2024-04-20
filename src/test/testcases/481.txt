@@ -1,0 +1,11 @@
+## type infer in function call 
+func inc(number a,string b) begin 
+    writeString(b)
+    ##return a+1
+end
+func main() begin 
+    dynamic c 
+    var a<-3 
+    inc(a,c)
+    c <- c+1
+end 

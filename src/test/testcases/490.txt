@@ -1,0 +1,9 @@
+## if 
+func main() begin 
+    dynamic a 
+    number b 
+    if (a)
+    number b
+    elif (a) number a <- b 
+    else a <- b
+end 

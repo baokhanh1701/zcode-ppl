@@ -1,0 +1,10 @@
+## return statement
+func f(number a)
+func main() begin 
+    var x <- f(x)
+end 
+func f(number a)
+begin  
+if (a>0) return a+1
+return "error"
+end

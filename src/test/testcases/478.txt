@@ -1,0 +1,7 @@
+## check type infer
+func f()
+func main() begin 
+    var a <- f() + 1
+    f()
+end 
+func f() return 1

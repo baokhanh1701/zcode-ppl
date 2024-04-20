@@ -1,0 +1,5 @@
+## redeclare io 
+func writeString(string x) begin
+    writeString(x)
+end 
+func main() return 1

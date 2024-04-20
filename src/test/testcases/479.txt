@@ -1,0 +1,5 @@
+## check type infer (in this testcase, when call if or for, it will also infer type)
+func main() begin 
+    dynamic i
+    for i until i == "abc" by 1 continue
+end

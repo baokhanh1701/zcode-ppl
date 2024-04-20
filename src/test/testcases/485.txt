@@ -1,0 +1,6 @@
+## var declare in scope hide the function
+func f() return
+func main() begin 
+    var f <- 1 
+    f()
+end 

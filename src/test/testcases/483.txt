@@ -1,0 +1,4 @@
+## type mismatch 
+func main() begin 
+    var x <- (x + 1) = x
+end

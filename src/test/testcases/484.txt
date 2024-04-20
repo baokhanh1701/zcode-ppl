@@ -1,0 +1,7 @@
+## type mismatch 
+func main() begin 
+    number a 
+    string b 
+    bool c[10,2]
+    a <- ((b..."abc") == "abcd") or c[a,a]
+end 
