@@ -823,17 +823,17 @@ class CheckSuite(unittest.TestCase):
         expect = ""
         self.assertTrue(TestChecker.test(input, expect, 476))
         
-        # input = """
-        #     func VoTien()
-        #     func main() begin
-        #         number VoTien_ <- VoTien()
-        #     end
-        #     func VoTien() begin
-        #     end
-        # """
-        # # expect = "???"
-        # expect = "Type Mismatch In Statement: Return()"
-        # self.assertTrue(TestChecker.test(input, expect, 477))
+        input = """
+            func VoTien()
+            func main() begin
+                number VoTien_ <- VoTien()
+            end
+            func VoTien() begin
+            end
+        """
+        # expect = "???"
+        expect = "Type Mismatch In Statement: Return()"
+        self.assertTrue(TestChecker.test(input, expect, 477))
         
         input = """
             dynamic VoTien
@@ -909,37 +909,37 @@ end
         expect = "Type Cannot Be Inferred: Return(CallExpr(Id(main), []))"
         self.assertTrue(TestChecker.test(input, expect, 499))
             
-    # def test_arraylit(self):
+    def test_arraylit(self):
         
-    #     # input = """
-    #     #     dynamic x
-    #     #     number a <- [x]
-    #     # """
-    #     # expect = "Type Mismatch In Statement: VarDecl(Id(a), NumberType, None, ArrayLit(Id(x)))"
-    #     # self.assertTrue(TestChecker.test(input, expect, 501))        
+        input = """
+            dynamic x
+            number a <- [x]
+        """
+        expect = "Type Mismatch In Statement: VarDecl(Id(a), NumberType, None, ArrayLit(Id(x)))"
+        self.assertTrue(TestChecker.test(input, expect, 501))        
         
-    #     # input = """
-    #     #     dynamic x
-    #     #     number a[3] <- [x]
-    #     #     func f()
-    #     #     begin
-    #     #         x <- [1,2,3]
-    #     #     end
-    #     # """
-    #     # expect = "Type Mismatch In Statement: VarDecl(Id(a), ArrayType([3.0], NumberType), None, ArrayLit(Id(x)))"
-    #     # self.assertTrue(TestChecker.test(input, expect, 502))        
+        input = """
+            dynamic x
+            number a[3] <- [x]
+            func f()
+            begin
+                x <- [1,2,3]
+            end
+        """
+        expect = "Type Mismatch In Statement: VarDecl(Id(a), ArrayType([3.0], NumberType), None, ArrayLit(Id(x)))"
+        self.assertTrue(TestChecker.test(input, expect, 502))        
         
-    #     # input = """
-    #     #     dynamic x
-    #     #     number a[3] <- [x, 1, 2]
-    #     #     func  main()
-    #     #     begin
-    #     #         x <- 1
-    #     #     end
+#         input = """
+#             dynamic x
+#             number a[3] <- [x, 1, 2]
+#             func  main()
+#             begin
+#                 x <- 1
+#             end
 
-    #     # """
-    #     # expect = ""
-    #     # self.assertTrue(TestChecker.test(input, expect, 502))     
+#         """
+#         expect = ""
+#         self.assertTrue(TestChecker.test(input, expect, 502))     
         
 
     #     # input = """
