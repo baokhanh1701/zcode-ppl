@@ -35,19 +35,18 @@ class StaticChecker(BaseVisitor, Utils):
         self.ForBlockCounter = 0
 
         self.function = None  # ! hàm hiện tại đang được dùng để kiểm tra static
-        self.Return = False  # ! kiểm tra hàm hiện tại có return hay không
+        self.Return = None  # ! kiểm tra hàm hiện tại có return hay không
 
         #! lưu danh sách các hàm dưới dạng Dict
-        # self.listFunction = [{
-        #     "readNumber": FuncZType([], NumberType(), True),
-        #     "readBool": FuncZType([], BoolType(), True),
-        #     "readString": FuncZType([], StringType(), True),
-        #     "writeNumber": FuncZType([NumberType()], VoidType(), True),
-        #     "writeBool": FuncZType([BoolType()], VoidType(), True),
-        #     "writeString": FuncZType([StringType()], VoidType(), True)
-        # }]
 
-        self.list_of_function = [{}]
+        self.list_of_function = [{
+            "readNumber": FuncZType([], NumberType(), True),
+            "readBool": FuncZType([], BoolType(), True),
+            "readString": FuncZType([], StringType(), True),
+            "writeNumber": FuncZType([NumberType()], VoidType(), True),
+            "writeBool": FuncZType([BoolType()], VoidType(), True),
+            "writeString": FuncZType([StringType()], VoidType(), True)
+        }]
 
     def debugLogs(self, ast, param, visit_name):
         print("-------------- Start state of " + visit_name + "--------------")
@@ -55,10 +54,6 @@ class StaticChecker(BaseVisitor, Utils):
         print("param: ", param)
 
         print("list of function: ", self.list_of_function)
-
-        # print("ForBlockCounter: ", self.ForBlockCounter)
-        # print("function static check: ", self.function)
-        # print("Return: ", self.Return)
 
         print("-------------- Debug --------------")
 
@@ -127,7 +122,7 @@ class StaticChecker(BaseVisitor, Utils):
                 return True
 
     def visitProgram(self, ast, param):
-        print("visitProgram")
+        self.prRed("visitProgram")
         for i in ast.decl:
             self.visit(i, param)
 
@@ -149,7 +144,7 @@ class StaticChecker(BaseVisitor, Utils):
                 raise NoEntryPoint()
 
     def visitVarDecl(self, ast: VarDecl, param):
-        print("\n\n", "visitVarDecl", ast.name.name)
+        self.prYellow("visitVarDecl: " + str(ast.name.name))
         # print("-----ast: ", ast)
         self.prCyan("ast: " + str(ast))
         # Redeclared error
@@ -169,7 +164,8 @@ class StaticChecker(BaseVisitor, Utils):
 
             # Get type of variable initialization --> visit to get varInit object (typ and name)
             rhs = self.visit(ast.varInit, param)
-
+            self.prLightGray("vardecl lhs: " + str(lhs))
+            self.prLightGray("vardecl rhs: " + str(rhs))
             if (isinstance(rhs, NumberType)
                     or
                     isinstance(rhs, BoolType)
@@ -177,7 +173,6 @@ class StaticChecker(BaseVisitor, Utils):
                     isinstance(rhs, StringType)
                 ):
                 rhs = VarZType(rhs)
-
             # if (rhs is VarZType):
             elif (isinstance(rhs, ArrayType)):
                 rhs = ArrayZType(rhs.size, ArrayType(rhs.size, rhs.eleType))
@@ -186,12 +181,6 @@ class StaticChecker(BaseVisitor, Utils):
             ):
                 rhs.typ = ZCodeType()
 
-            # Debug my ass
-            # for key in param[0].keys():
-            #     print("name of param: ", key)
-            #     print("type of param:", param[0][key].typ)
-            # print("lhs: ", lhs)
-            # print("rhs: ", rhs)
             if (
                 ast.varType is None  # ? Xet luon ast
                 and
@@ -252,8 +241,8 @@ class StaticChecker(BaseVisitor, Utils):
                 not isinstance(rhs.typ, ZCodeType)
             ):
                 print("6-----case6")
-                print("--- ast.varTyoe", ast.varType)
-                print("--- ast.varTyoe", rhs.typ)
+                print("--- ast.varType", ast.varType)
+                print("--- rhs.typ", rhs.typ)
                 if not self.compareTypeInDecl(ast.varType, rhs.typ):
                     raise TypeMismatchInStatement(ast)
                 ast.varType = rhs.typ
@@ -264,8 +253,8 @@ class StaticChecker(BaseVisitor, Utils):
         return None
 
     def visitFuncDecl(self, ast: FuncDecl, param):
+        self.prYellow("visitFuncDecl: " + str(ast.name.name))
         print("\n\nvisitFucnDecl", ast.name.name)
-
         check_exists_func = self.list_of_function[0].get(ast.name.name)
 
         # Check if exist in list of function
@@ -307,23 +296,23 @@ class StaticChecker(BaseVisitor, Utils):
             typeParamToString.append(i.varType.__str__())
 
         self.function.params = typeParam
-
+        self.prPurple("self.Return before: " + str(self.Return))
+        self.Return = None
         if (ast.body):
             self.visit(ast.body, [listParam] + param)
             self.function.body = True
             if (not self.Return):
                 self.function.typ = VoidType()
-
-        self.Return = False  # ! kiểm tra hàm hiện tại có return hay không
-
-        #! hàm này không có return
-        # if not self.Return:
-        #     #! type cũng chưa có luôn ta xác định nó VoidType
-        #     if self.list_of_function[0][ast.name.name].typ is None:
-        #         self.list_of_function[0][ast.name.name].typ = VoidType()
-        #     #! type đã có so sánh nó với VoidType
-        # elif not self.list_of_function[0][ast.name.name].typ == VoidType():
-        #     raise TypeMismatchInStatement(Return(None))
+        
+        # if self.Return is None:
+        #     checker = self.list_of_function[0][ast.name.name].typ if isinstance(self.list_of_function[0][ast.name.name], FuncZType) else self.list_of_function[0][ast.name.name]
+        #     self.prLightPurple("function type: " + str(self.list_of_function[0][ast.name.name].typ))
+        #     self.prLightPurple("checker: " + str(checker))
+        #     if checker is None:
+        #         self.list_of_function[0][ast.name.name].typ = ZCodeType()
+        #         self.prLightPurple("function type - after assigning type: " + str(self.list_of_function[0][ast.name.name].typ))
+        #     elif (not isinstance(checker, VoidType)):
+        #         raise TypeMismatchInStatement(Return(None))
 
     def visitId(self, ast: Id, param):
         # self.debugLogs(ast, param, "visitId")
@@ -430,8 +419,6 @@ class StaticChecker(BaseVisitor, Utils):
         self.prGreen("PASS: Function called is VoidType")
     
         return VarZType(call_to_function.typ)
-
-
 
     def visitIf(self, ast: If, param):
         # self.debugLogs(ast, param, "visitIf")
@@ -983,6 +970,7 @@ class StaticChecker(BaseVisitor, Utils):
             #         ):
             #         raise TypeMismatchInExpression(ast)
             # return VarZType(StringType())
+
     def visitUnaryOp(self, ast : UnaryOp, param):
         self.prYellow("\n\visitUnaryOp" + str(ast.operand) + " " + str(ast.op))
         operand = self.visit(ast.operand, param)
@@ -998,12 +986,12 @@ class StaticChecker(BaseVisitor, Utils):
             if (
                 operand is None
             ):
-                operand = NumberType()
+                self.visit(ast.operand, param).typ = NumberType()
                 return VarZType(NumberType())
             else:
                 if (not self.compareTypeInDecl(operand, NumberType())):
                     raise TypeMismatchInExpression(ast)
-                self.visit(operand, param).typ = NumberType()
+                self.visit(ast.operand, param).typ = NumberType()
                 return VarZType(NumberType())
         elif(
             op == 'not'
@@ -1012,7 +1000,7 @@ class StaticChecker(BaseVisitor, Utils):
             if (
                 operand is None
             ):
-                operand = BoolType()
+                self.visit(ast.operand, param).typ = BoolType()
                 return VarZType(BoolType())
             else:
                 if (not self.compareTypeInDecl(operand, BoolType())):
@@ -1030,10 +1018,49 @@ class StaticChecker(BaseVisitor, Utils):
             #     type_rhs = NumberType()                
             #     return VarZType(NumberType())
 
-        
+    def visitArrayCell(self, ast : ArrayCell, param):
+        self.prYellow("\n\n visitArrayCell: " + str(ast))
+        array = self.visit(ast.arr, param)
+        array = array.typ if isinstance(array, ZCodeType) else array
+        self.prLightGray("array: " + str(array))
+        if (not isinstance(array, ArrayType)):
+            raise TypeMismatchInExpression(ast)
+        self.prGreen("PASS: array is not ArrayType")
+        if (len(array.size) < len(ast.idx)):
+            raise TypeMismatchInExpression(ast)
+    
+        self.prPurple("len(array): " + str(len(array.size)))
+        self.prPurple("len(ast.idx): " + str(len(ast.idx)))
+        self.prGreen("PASS: len of array is less than len of index")
+        for index in ast.idx:
+            checker = self.visit(index, param)
+            # checker = checker.typ if isinstance(checker, ZCodeType) else checker
+            print("index checker: ", checker)
+            if isinstance(checker, FuncZType):
+                if (checker.typ is None):
+                    if (self.list_of_function[0].get(index.name.name)
+                        and
+                        isinstance(self.list_of_function[0].get(index.name.name), FuncZType)
+                        ):
+                        self.list_of_function[0].get(index.name.name).typ = NumberType()
+                
+            elif isinstance(checker, VarZType):
+                # for scope in param:
+                for scope in param:
+                    if (scope.get(index.name) and isinstance(scope.get(index.name), VarZType)):
+                        scope.get(index.name).typ = NumberType()
+                        break
+                                
+            elif (not isinstance(self.visit(index, param), NumberType)):
+                raise TypeMismatchInExpression(ast)
+            self.prGreen("PASS: visit(index) is not NumberType")
 
-    def visitArrayCell(self, ast, param):
-        self.debugLogs(ast, param, "visitArrayCell")
+        if (len(array.size) == len(ast.idx)):
+            return VarZType(array.eleType)
+        
+        if (len(array.size) > len(ast.idx)):
+            return ArrayZType(array.size[len(ast.idx):], array.eleType)
+
 
     def visitArrayLiteral(self, ast, param):
         # self.debugLogs(ast, param, "visitArrayLiteral")
