@@ -1,4 +1,4 @@
 
             dynamic x
-            number a <- [x]
+            var a <- [x]
         

@@ -1,1 +1,1 @@
-Type Mismatch In Statement: VarDecl(Id(a), NumberType, None, ArrayLit(Id(x)))
+Type Cannot Be Inferred: VarDecl(Id(a), None, var, ArrayLit(Id(x)))

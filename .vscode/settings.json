@@ -2,5 +2,6 @@
     "python.analysis.extraPaths": [
         "./src/main/zcode/utils",
         "./src/main/zcode/parser"
-    ]
+    ],
+    "python.REPL.enableREPLSmartSend": false
 }
